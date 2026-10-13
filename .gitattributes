@@ -1,0 +1,8 @@
+# Store text files with LF line endings in the repository and working copy,
+# whatever the contributor's OS, so diffs and the Linux CI stay consistent.
+* text=auto eol=lf
+
+# Binary files: never touch.
+*.png binary
+*.ico binary
+*.woff2 binary

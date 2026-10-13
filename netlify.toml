@@ -1,0 +1,27 @@
+# Netlify settings for the React frontend (client/). See README → Deployment.
+
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# API calls go through Netlify to the Express API, so the browser only ever
+# talks to this site. That keeps the session cookie (SameSite=Lax) first-party;
+# a direct call from *.netlify.app to *.onrender.com would be cross-site and
+# the browser would not send the cookie.
+# >>> Replace YOUR-API-HOST with your API's host, e.g. shortify-api.onrender.com <<<
+[[redirects]]
+  from = "/api/*"
+  to = "https://YOUR-API-HOST/api/:splat"
+  status = 200
+  force = true
+
+# Single-page app: every other path loads index.html and React Router shows
+# the right page (so refreshing /dashboard or opening a shared /qr link works).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
