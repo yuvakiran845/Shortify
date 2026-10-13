@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "node --watch src/server.js",
+    "lan": "node scripts/lanMode.js",
     "start": "node src/server.js",
     "lint": "eslint .",
     "test": "node --import ./tests/setup.js --test --test-concurrency=1 --test-reporter=spec",

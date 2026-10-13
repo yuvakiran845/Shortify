@@ -3,6 +3,11 @@
  *
  *   npm run smoke                                  # http://localhost:5000/api
  *   npm run smoke -- https://your-app.example.com/api
+ *   npm run smoke -- https://your-app.example.com/api --redirect-via https://shortify-api.onrender.com
+ *
+ * --redirect-via sends the short-link visits to that server instead of the
+ * short domain itself (the /<code> path is kept): useful right after setting
+ * up your own domain, while its DNS is still propagating.
  *
  * It behaves like a real browser (cookies + CSRF header) and checks the
  * important flows: guest links, sign-up and claiming, redirects and click
@@ -15,7 +20,10 @@
  */
 import { randomUUID } from 'node:crypto';
 
-const API = (process.argv[2] || process.env.SMOKE_API_URL || 'http://localhost:5000/api').replace(/\/+$/, '');
+const args = process.argv.slice(2);
+const viaIndex = args.indexOf('--redirect-via');
+const REDIRECT_VIA = (viaIndex >= 0 ? args.splice(viaIndex, 2)[1] : process.env.SMOKE_REDIRECT_VIA)?.replace(/\/+$/, '');
+const API = (args[0] || process.env.SMOKE_API_URL || 'http://localhost:5000/api').replace(/\/+$/, '');
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 const run = randomUUID().slice(0, 8);
 
@@ -72,14 +80,15 @@ function newBrowser() {
 
 // Opens a short link like a visitor would, without following the redirect.
 async function visit(shortUrl, accept = 'text/html') {
-  const response = await fetch(shortUrl, { redirect: 'manual', headers: { 'User-Agent': `${BROWSER_UA} ${run}`, Accept: accept } });
+  const target = REDIRECT_VIA ? `${REDIRECT_VIA}${new URL(shortUrl).pathname}` : shortUrl;
+  const response = await fetch(target, { redirect: 'manual', headers: { 'User-Agent': `${BROWSER_UA} ${run}`, Accept: accept } });
   return { status: response.status, location: response.headers.get('location') };
 }
 
 const credentials = (who) => ({ name: `Smoke ${who}`, email: `smoke-${run}-${who}@example.com`, password: randomUUID() });
 
 async function main() {
-  console.log(`Shortify smoke test against ${API}\n`);
+  console.log(`Shortify smoke test against ${API}${REDIRECT_VIA ? ` (short links opened via ${REDIRECT_VIA})` : ''}\n`);
 
   console.log('API');
   const health = await fetch(`${API}/health`).then((response) => response.json());
@@ -110,6 +119,10 @@ async function main() {
   check(!JSON.stringify(signup.body).includes('passwordHash'), 'the password hash is never returned');
 
   const alias = `smoke-${run}`;
+  const random = await ana.post('/links', { url: 'https://example.org/random-code' });
+  const randomUrl = random.body?.link?.shortUrl ?? '';
+  check(randomUrl.startsWith(`${shortLinkBaseUrl}/`) && /^[A-Za-z0-9]{7}$/.test(randomUrl.slice(shortLinkBaseUrl.length + 1)),
+    `new links look like ${shortLinkBaseUrl}/<7 random letters and digits>`, randomUrl);
   const created = await ana.post('/links', { url: 'https://example.org/smoke', alias, title: 'Smoke test' });
   check(created.status === 201 && created.body.link.shortCode === alias, 'create a link with a custom alias and title');
   const link = created.body.link;
@@ -123,8 +136,8 @@ async function main() {
   check((await ana.get(`/links/${link.id}`)).body?.link?.clickCount === 1, 'an immediate repeat click by the same visitor is not double-counted');
 
   const dashboard = await ana.get('/dashboard');
-  check(dashboard.body?.stats?.totalLinks === 2 && dashboard.body?.stats?.totalClicks === 2,
-    'dashboard totals match real data (2 links, 2 clicks)', JSON.stringify(dashboard.body?.stats));
+  check(dashboard.body?.stats?.totalLinks === 3 && dashboard.body?.stats?.totalClicks === 2,
+    'dashboard totals match real data (3 links, 2 clicks)', JSON.stringify(dashboard.body?.stats));
   const to = new Date();
   const from = new Date(to.getTime() - 24 * 60 * 60 * 1000);
   const analytics = await ana.get(`/analytics?from=${from.toISOString()}&to=${to.toISOString()}&tz=UTC&linkId=${link.id}`);

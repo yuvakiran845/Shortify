@@ -14,7 +14,9 @@ services:
         value: production
       - key: MONGO_URI # MongoDB Atlas connection string
         sync: false
-      - key: PUBLIC_BASE_URL # this service's URL, e.g. https://shortify-api.onrender.com
+      # The short-link domain: https://shortify-api.onrender.com, or your own domain once it
+      # points here, e.g. https://yourdomain.com (README → "Use your own short domain").
+      - key: PUBLIC_BASE_URL
         sync: false
       - key: CLIENT_ORIGIN # the frontend URL, e.g. https://shortify.netlify.app
         sync: false

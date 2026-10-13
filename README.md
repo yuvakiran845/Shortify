@@ -135,6 +135,21 @@ Open http://localhost:5173. In development, Vite forwards `/api` requests to the
 
 In development, http://localhost:5173/ui shows every shared UI component (excluded from production builds).
 
+## Open short links on your phone
+
+Short links are built from `PUBLIC_BASE_URL`. With the default `http://localhost:5000`, a link only opens on this computer: on a phone, "localhost" means the phone itself. To test with phones and tablets on the **same Wi-Fi**:
+
+```bash
+cd server
+npm run lan
+```
+
+This finds the computer's network address (skipping WSL, Hyper-V, VirtualBox, and VPN adapters) and sets `PUBLIC_BASE_URL` (e.g. `http://192.168.1.20:5000`) and `CLIENT_ORIGIN` in `server/.env`. Restart the API afterwards. Every link, and the QR codes made for them, then uses that address: short URLs are built from the setting on every request, and saved QR codes are brought up to date when the API starts.
+
+To use the app itself on the phone as well, start the frontend with `npm run dev:lan` (in `client/`) and open `http://<network address>:5173`. The first time, Windows may ask whether Node.js may accept connections; allow it for private networks.
+
+The address can change when you switch networks: run `npm run lan` again. `npm run lan -- off` goes back to `localhost`. Links only work while this computer is on and in the same network; to share links with anyone, anywhere, deploy the app (see [Deployment](#deployment)).
+
 ## Pages
 
 | Path | Who | Layout |
@@ -155,7 +170,7 @@ The **app shell** has a fixed sidebar on desktop (Create link, Overview, My link
 | `PORT` | `5000` | Port the API listens on |
 | `NODE_ENV` | `development` | `production` requires HTTPS for `PUBLIC_BASE_URL` and `CLIENT_ORIGIN`, and secure cookies |
 | `MONGO_URI` | `mongodb://127.0.0.1:27017/shortify` | MongoDB connection string |
-| `PUBLIC_BASE_URL` | `http://localhost:5000` | Domain short links are built from: `<PUBLIC_BASE_URL>/<code>` |
+| `PUBLIC_BASE_URL` | `http://localhost:5000` | The short-link domain: links are `<PUBLIC_BASE_URL>/<code>`, e.g. `https://yourdomain.com/aB7xK9p`. Address only (no path). In production it must be a public HTTPS domain that points at this API (see [Use your own short domain](#use-your-own-short-domain)). |
 | `CLIENT_ORIGIN` | `http://localhost:5173` | Frontend origin(s) allowed by CORS, comma-separated. Origins only (no path); a trailing slash is removed. Required in production. |
 | `TRUST_PROXY` | `0` | Number of reverse proxies in front of the API (usually `1` when hosted) |
 | `API_LIMIT_PER_MINUTE` | `300` | All API requests from one IP address per minute (safety net for every endpoint) |
@@ -445,13 +460,13 @@ Visitors can shorten links without an account. Such links belong to the browser 
 
 ```bash
 cd server && npm run lint   # ESLint
-cd server && npm test       # 298 API + unit tests; needs MongoDB, uses the separate "shortify_test" database
+cd server && npm test       # 312 API + unit tests; needs MongoDB, uses the separate "shortify_test" database
 cd client && npm run lint   # ESLint (incl. React hooks rules)
 cd client && npm test       # 87 unit tests, incl. decoding generated QR codes with jsQR
 cd client && npm run build  # production build
 ```
 
-**Smoke test (end to end).** With the API running, `cd server && npm run smoke` walks through the real user flows over HTTP like a browser would (40 checks): guest link → redirect → sign-up claims it → alias, conflict, click counting, dashboard and analytics numbers, QR history, edit/rename/switch off, another user getting `404` for everything, CSRF rejection, delete, logout revoking a copied session cookie, and login. Point it at a deployment with `npm run smoke -- https://your-site.netlify.app/api`. It leaves two `smoke-...@example.com` accounts behind (there is no delete-account endpoint).
+**Smoke test (end to end).** With the API running, `cd server && npm run smoke` walks through the real user flows over HTTP like a browser would (41 checks): guest link → redirect → sign-up claims it → alias, conflict, click counting, dashboard and analytics numbers, QR history, edit/rename/switch off, another user getting `404` for everything, CSRF rejection, delete, logout revoking a copied session cookie, and login. Point it at a deployment with `npm run smoke -- https://your-site.netlify.app/api`. It leaves two `smoke-...@example.com` accounts behind (there is no delete-account endpoint).
 
 **CI.** `.github/workflows/ci.yml` runs the server lint and tests against a MongoDB 7 service container, and the client lint, tests, and build, on every push to `main` and every pull request.
 
@@ -478,6 +493,48 @@ Hosting notes:
 - Render's free plan sleeps after inactivity; the first request after a pause (including a short-link redirect) can take tens of seconds.
 - `TRUST_PROXY` must match the number of proxies in front of the API (Render: 1), otherwise per-IP rate limits see the proxy's address. With the Netlify `/api` proxy, API rate limits count per Netlify edge address rather than per visitor; redirects (which go to Render directly) are counted per visitor. The custom-domain setup avoids this.
 - Rate-limit counters and the repeat-click cache are kept in memory, so they reset on restart and are per instance. Data in MongoDB is unaffected (verified: links and clicks survive an API restart).
+
+### Use your own short domain
+
+Professional shorteners give links like `https://l1nq.com/nbtbjef`: HTTPS, a short public domain, and a random code. Shortify already builds links exactly like that (`<PUBLIC_BASE_URL>/<7 random letters and digits>`); what makes them work for everyone is **a domain that points at your API**.
+
+**You can only use a domain you control.** A short link works because the domain's DNS sends visitors to *your* server. Someone else's domain (for example `l1nq.com`, which belongs to the encurtador.dev service and sends every visit to their servers) cannot be used: only its owner can point it anywhere. Setting `PUBLIC_BASE_URL` to a domain you do not control would produce links that open the other service, not yours.
+
+Two ways to get a working public domain:
+
+| Option | Links look like | Cost |
+|---|---|---|
+| Render's free subdomain | `https://shortify-api.onrender.com/aB7xK9p` | free |
+| Your own short domain | `https://yourdomain.com/aB7xK9p` | the domain's yearly price (short `.link`, `.xyz`, `.click` domains are often cheap; compare registrars such as Cloudflare, Namecheap, or Porkbun). Render's Hobby plan includes 2 custom domains. |
+
+Recommended layout with your own domain (the same pattern as big shorteners): the **short domain** serves the redirects and the API, and the **app** lives on a subdomain.
+
+| Address | Points to | Purpose |
+|---|---|---|
+| `yourdomain.com` | Render web service (the API) | short links `https://yourdomain.com/<code>`, the API at `/api`; `/` sends visitors to the app |
+| `app.yourdomain.com` | Netlify site (the frontend) | sign up, dashboard, My links, analytics, QR codes |
+
+Because both are on `yourdomain.com`, the browser treats them as the same site, so the session cookie works without the Netlify `/api` proxy.
+
+Steps (after the normal [Deployment](#deployment) works on the free subdomains):
+
+1. **Buy the domain** at any registrar.
+2. **Render → your API service → Settings → Custom Domains → Add** `yourdomain.com` (Render adds `www` too and redirects it). Then at your DNS provider ([Render's guide](https://render.com/docs/configure-other-dns)):
+   - root domain: an `ALIAS`/`ANAME` record to `<your-service>.onrender.com`, or if those are not supported an `A` record to `216.24.57.1` (on Cloudflare DNS use a `CNAME`, which Cloudflare flattens);
+   - `www`: a `CNAME` to `<your-service>.onrender.com`;
+   - remove any `AAAA` records for these names.
+
+   Click **Verify**. Render issues the HTTPS certificate automatically and redirects `http://` to `https://`.
+3. **Netlify → your site → Domain management → Add** `app.yourdomain.com`, then add the `CNAME` record Netlify shows (`app` → `<your-site>.netlify.app`). DNS changes can take up to a day to spread.
+4. **Settings**:
+   - Render: `PUBLIC_BASE_URL=https://yourdomain.com`, `CLIENT_ORIGIN=https://app.yourdomain.com`. If you turn on Cloudflare's proxy (orange cloud) in front of Render, there is one more proxy hop: set `TRUST_PROXY=2`.
+   - Netlify: `VITE_API_URL=https://yourdomain.com/api`, and delete the `/api/*` rule from `netlify.toml` (the app now calls the API directly).
+   - Redeploy both. Existing links switch to the new domain automatically (short URLs are built from the setting on every request), and saved QR codes are updated when the API starts. QR codes that were already printed keep the old address.
+5. **Check**: `cd server && npm run smoke -- https://yourdomain.com/api`. While DNS is still spreading, you can already test the server itself with `--redirect-via https://<your-service>.onrender.com`.
+
+In production the API refuses to start if `PUBLIC_BASE_URL` is not HTTPS, has a path, or is `localhost`/an IP address, so a broken short-link domain is caught at deploy time instead of producing dead links.
+
+Using another company's shortening API instead (Bitly, TinyURL, encurtador.dev, ...) would give their domain, but every click would go through their servers: Shortify's click tracking and analytics would no longer see those visits, API keys and paid credits or monthly limits apply, and the key would have to stay on the server. Your own domain keeps everything in Shortify.
 
 ## Known limitations
 

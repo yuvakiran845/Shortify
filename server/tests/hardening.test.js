@@ -2,7 +2,7 @@ import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
-import { parseClientOrigins } from '../src/config/env.js';
+import { parseClientOrigins, parsePublicBaseUrl } from '../src/config/env.js';
 import { errorHandler, isDatabaseUnavailable } from '../src/middleware/errorHandler.js';
 import { connectTestDatabase, dropTestDatabase } from './helpers/db.js';
 
@@ -120,6 +120,26 @@ describe('CLIENT_ORIGIN parsing', () => {
   ]) {
     test(`rejects ${JSON.stringify(value)}${production ? ' in production' : ''}`, () => {
       assert.throws(() => parseClientOrigins(value, { production }), pattern);
+    });
+  }
+});
+
+describe('PUBLIC_BASE_URL (the short-link domain)', () => {
+  test('a public HTTPS domain gives links like https://yourdomain.com/<code>', () => {
+    assert.equal(parsePublicBaseUrl('https://go.example.com/', { production: true }), 'https://go.example.com');
+    assert.equal(parsePublicBaseUrl('http://192.168.1.20:5000', { production: false }), 'http://192.168.1.20:5000');
+  });
+
+  for (const [value, production, pattern] of [
+    ['https://example.com/s', false, /without a path/],
+    ['example.com', false, /absolute URL/],
+    ['http://go.example.com', true, /https:\/\/ in production/],
+    ['https://localhost:5000', true, /public domain in production/],
+    ['https://192.168.1.20', true, /public domain in production/],
+    ['https://intranet', true, /public domain in production/],
+  ]) {
+    test(`rejects ${JSON.stringify(value)}${production ? ' in production' : ''}`, () => {
+      assert.throws(() => parsePublicBaseUrl(value, { production }), pattern);
     });
   }
 });

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { QrCode } from '../src/models/QrCode.js';
+import { syncLinkQrCodes } from '../src/services/qrService.js';
 import { clearDatabase, connectTestDatabase, dropTestDatabase } from './helpers/db.js';
 import { newClient, newUser } from './helpers/client.js';
 
@@ -167,5 +168,36 @@ describe('GET and DELETE /api/qr-codes', () => {
     assert.equal((await ana.get('/api/qr-codes').expect(200)).body.qrCodes.length, 0);
     await ana.delete(`/api/qr-codes/${qr.id}`).expect(404);
     await ana.delete('/api/qr-codes/not-an-id').expect(404);
+  });
+});
+
+describe('saved QR codes follow the short-link address', () => {
+  // Simulates QR codes saved while PUBLIC_BASE_URL was still http://localhost:5000.
+  const makeOutdated = (id, code) => QrCode.updateOne({ _id: id }, { $set: { content: `http://localhost:5000/${code}` } });
+
+  test('entries for links are updated to the current address; plain URLs are left alone', async () => {
+    const ana = await newUser(app);
+    const link = (await ana.post('/api/links', { url: 'https://example.com/flyer' }).expect(201)).body.link;
+    const forLink = (await ana.post('/api/qr-codes', { linkId: link.id }).expect(201)).body.qrCode;
+    const forUrl = (await ana.post('/api/qr-codes', { url: 'https://example.com/menu' }).expect(201)).body.qrCode;
+    await makeOutdated(forLink.id, link.shortCode);
+
+    assert.equal(await syncLinkQrCodes(), 1);
+    const history = (await ana.get('/api/qr-codes').expect(200)).body.qrCodes;
+    assert.equal(history.find((item) => item.id === forLink.id).content, link.shortUrl);
+    assert.equal(history.find((item) => item.id === forUrl.id).content, 'https://example.com/menu');
+    assert.equal(await syncLinkQrCodes(), 0, 'nothing left to update');
+  });
+
+  test('an outdated copy is removed when the owner already has the up-to-date entry', async () => {
+    const ana = await newUser(app);
+    const link = (await ana.post('/api/links', { url: 'https://example.com/poster' }).expect(201)).body.link;
+    const old = (await ana.post('/api/qr-codes', { linkId: link.id }).expect(201)).body.qrCode;
+    await makeOutdated(old.id, link.shortCode);
+    await ana.post('/api/qr-codes', { linkId: link.id }).expect(201); // generated again after the address changed
+
+    await syncLinkQrCodes();
+    const contents = (await ana.get('/api/qr-codes').expect(200)).body.qrCodes.map((item) => item.content);
+    assert.deepEqual(contents, [link.shortUrl]);
   });
 });

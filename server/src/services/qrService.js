@@ -63,6 +63,36 @@ export function countQrCodes(userId) {
   return QrCode.countDocuments({ owner: userId });
 }
 
+/**
+ * Keeps saved QR codes for links pointing at the current short-link address.
+ * Short URLs are built from PUBLIC_BASE_URL, so when it changes (localhost →
+ * a network address → a real domain), QR history saved earlier would still
+ * contain the old address, which other devices cannot open. Runs at startup;
+ * only out-of-date entries are written. Returns how many were updated.
+ */
+export async function syncLinkQrCodes() {
+  const entries = await QrCode.find({ link: { $ne: null } })
+    .select('content link')
+    .populate('link', 'shortCode')
+    .lean();
+
+  let updated = 0;
+  for (const entry of entries) {
+    if (!entry.link) continue; // the link no longer exists (deleting a link also deletes its QR codes)
+    const content = buildShortUrl(entry.link.shortCode);
+    if (entry.content === content) continue;
+    try {
+      await QrCode.updateOne({ _id: entry._id }, { $set: { content } });
+    } catch (error) {
+      if (error?.code !== 11000) throw error;
+      // The owner already has an entry with the new address: drop the outdated copy.
+      await QrCode.deleteOne({ _id: entry._id });
+    }
+    updated += 1;
+  }
+  return updated;
+}
+
 // Returns true if something was deleted. Matching on owner means users can
 // only ever delete their own entries.
 export async function deleteQrCode(userId, id) {

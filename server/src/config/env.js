@@ -11,21 +11,37 @@ function required(name) {
   return value;
 }
 
-function parsePublicBaseUrl(value) {
+/**
+ * PUBLIC_BASE_URL: the address every short link is built from,
+ * "<PUBLIC_BASE_URL>/<code>", e.g. https://yourdomain.com/aB7xK9p.
+ * It must be a domain that really points at this server (one you own and have
+ * configured, see README → "Use your own short domain"). In production it must
+ * be a public HTTPS domain: localhost or a private IP would give links that
+ * other devices cannot open.
+ */
+export function parsePublicBaseUrl(value, { production = isProduction } = {}) {
   let url;
   try {
     url = new URL(value);
   } catch {
-    throw new Error('PUBLIC_BASE_URL must be an absolute URL, for example https://sho.rt');
+    throw new Error('PUBLIC_BASE_URL must be an absolute URL, for example https://yourdomain.com');
   }
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
     throw new Error('PUBLIC_BASE_URL must start with http:// or https://');
   }
-  if (isProduction && url.protocol !== 'https:') {
-    throw new Error('PUBLIC_BASE_URL must use https:// in production');
+  // Short links are served at the root ("/<code>"), so a path would make every link 404.
+  if (url.pathname !== '/' || url.search || url.hash) {
+    throw new Error('PUBLIC_BASE_URL must be only the address, without a path, for example https://yourdomain.com');
   }
-  // Keep only "protocol://host[:port][/path]" without a trailing slash
-  return `${url.origin}${url.pathname}`.replace(/\/+$/, '');
+  if (production) {
+    if (url.protocol !== 'https:') throw new Error('PUBLIC_BASE_URL must use https:// in production');
+    const host = url.hostname;
+    const isIpAddress = /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.startsWith('[');
+    if (host === 'localhost' || host.endsWith('.localhost') || isIpAddress || !host.includes('.')) {
+      throw new Error('PUBLIC_BASE_URL must be a public domain in production (e.g. https://yourdomain.com), not localhost or an IP address');
+    }
+  }
+  return url.origin; // "https://yourdomain.com" (no trailing slash; a non-default port is kept)
 }
 
 // The JWT secret signs every login session. Anyone who knows it can forge
