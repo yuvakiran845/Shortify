@@ -1,0 +1,34 @@
+{
+  "name": "shortify-server",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Shortify REST API (Express + MongoDB)",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "lint": "eslint .",
+    "test": "node --import ./tests/setup.js --test --test-concurrency=1 --test-reporter=spec",
+    "smoke": "node scripts/smokeTest.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.11.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "supertest": "^7.3.1"
+  }
+}
