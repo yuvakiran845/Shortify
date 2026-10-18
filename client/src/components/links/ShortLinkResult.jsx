@@ -13,7 +13,7 @@ export default function ShortLinkResult({ link }) {
 
   return (
     <Card className="border-brand-200">
-      <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+      <p className="flex items-center gap-2 text-sm font-medium text-green-700">
         <CircleCheck className="size-4" aria-hidden="true" />
         Your short link is ready
       </p>

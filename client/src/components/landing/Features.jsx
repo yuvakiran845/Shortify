@@ -1,4 +1,4 @@
-import { ChartColumn, FolderSearch, Link2, PenLine, QrCode, ShieldCheck } from 'lucide-react';
+import { FolderSearch, Link2, MousePointerClick, PenLine, QrCode, ShieldCheck } from 'lucide-react';
 import Container from '../layout/Container';
 import Card from '../ui/Card';
 import SectionHeading from './SectionHeading';
@@ -20,9 +20,9 @@ const FEATURES = [
     description: 'Pick a readable ending like /spring-sale so people know where a link goes before they tap it.',
   },
   {
-    icon: ChartColumn,
-    title: 'Click analytics',
-    description: 'See total clicks, activity over time, and which of your links perform best.',
+    icon: MousePointerClick,
+    title: 'Real click counts',
+    description: 'See how many people opened each link. Bots, link previews, and repeat clicks are not counted.',
   },
   {
     icon: FolderSearch,
@@ -48,14 +48,14 @@ export default function Features() {
           id="features-title"
           eyebrow="Features"
           title="Everything you need to share links"
-          description="Shortify keeps the essentials simple: create a link, make it yours, share it anywhere, and measure what happens next."
+          description="Shortify keeps the essentials simple: create a link, make it yours, share it anywhere, and see how often it is opened."
         />
 
         <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(({ icon: Icon, title, description }) => (
             <li key={title}>
-              <Card className="h-full transition-shadow hover:shadow-raised">
-                <span className="grid size-11 place-items-center rounded-lg bg-brand-50 text-brand-600">
+              <Card className="h-full transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-raised">
+                <span className="grid size-11 place-items-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-100">
                   <Icon className="size-5" aria-hidden="true" />
                 </span>
                 <h3 className="mt-5 text-base font-semibold text-ink">{title}</h3>

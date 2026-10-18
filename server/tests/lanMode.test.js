@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pickLanAddress, setEnvValues } from '../scripts/lanMode.js';
+import { pickLanAddress, renameLegacyBaseUrl, setEnvValues } from '../scripts/lanMode.js';
 
 const ipv4 = (address, internal = false) => ({ address, family: 'IPv4', internal });
 
@@ -35,5 +35,15 @@ describe('setEnvValues', () => {
   test('adds a missing setting at the end', () => {
     const result = setEnvValues(env, { CLIENT_ORIGIN: 'http://192.168.1.20:5173' });
     assert.ok(result.endsWith('JWT_SECRET=keep-me\nCLIENT_ORIGIN=http://192.168.1.20:5173\n'));
+  });
+});
+
+describe('renameLegacyBaseUrl', () => {
+  test('renames the old APP_BASE_URL line in place', () => {
+    assert.equal(renameLegacyBaseUrl('A=1\nAPP_BASE_URL=http://localhost:5000\nB=2\n'), 'A=1\nPUBLIC_BASE_URL=http://localhost:5000\nB=2\n');
+  });
+
+  test('drops the old line when PUBLIC_BASE_URL is already there', () => {
+    assert.equal(renameLegacyBaseUrl('APP_BASE_URL=http://old:5000\r\nPUBLIC_BASE_URL=http://localhost:5000\r\n'), 'PUBLIC_BASE_URL=http://localhost:5000\r\n');
   });
 });

@@ -1,5 +1,5 @@
 import './loadEnv.js'; // must stay first: fills process.env before config is read
-import { config } from './config/env.js';
+import { config, isLocalOnlyHost } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './config/db.js';
 import { createApp } from './app.js';
 import { syncLinkQrCodes } from './services/qrService.js';
@@ -22,8 +22,12 @@ try {
 
 const server = createApp().listen(config.port, () => {
   console.log(`Shortify API listening on http://localhost:${config.port}`);
-  // Short links only work on other devices if this is an address they can reach (see "npm run lan").
   console.log(`Short links look like ${config.publicBaseUrl}/Abc1234`);
+  if (config.clientDistDir) console.log(`Website served from ${config.clientDistDir}`);
+  // Be honest about reach: localhost / private-network links do not work on other devices on the internet.
+  if (isLocalOnlyHost(new URL(config.publicBaseUrl).hostname)) {
+    console.log('Note: these short links only open on this computer or local network. Deploy and set PUBLIC_BASE_URL for public links (README → Deployment).');
+  }
 });
 
 // Finish in-flight requests and close the DB connection when the host stops the app.

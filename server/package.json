@@ -14,7 +14,8 @@
     "start": "node src/server.js",
     "lint": "eslint .",
     "test": "node --import ./tests/setup.js --test --test-concurrency=1 --test-reporter=spec",
-    "smoke": "node scripts/smokeTest.js"
+    "smoke": "node scripts/smokeTest.js",
+    "check-db": "node scripts/checkDb.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

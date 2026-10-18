@@ -1,10 +1,11 @@
 import { Link } from 'react-router';
-import { ArrowRight, ChartColumn, CircleCheck, Link2, MousePointerClick, Plus, QrCode } from 'lucide-react';
+import { ArrowRight, CircleCheck, Link2, MousePointerClick, Plus, QrCode } from 'lucide-react';
 import AppPage from '../components/app/AppPage';
 import GetStarted from '../components/dashboard/GetStarted';
 import StatCard, { StatCardSkeleton } from '../components/dashboard/StatCard';
 import LinksList from '../components/links/LinksList';
 import LinksListSkeleton from '../components/links/LinksListSkeleton';
+import LocalLinksNotice from '../components/links/LocalLinksNotice';
 import Button from '../components/ui/Button';
 import ErrorState from '../components/ui/ErrorState';
 import useAppShell from '../hooks/useAppShell';
@@ -26,16 +27,10 @@ export default function Dashboard() {
       title={`Hello, ${firstName}`}
       description="Here's how your links are doing."
       actions={
-        <>
-          <Button to={ROUTES.analytics} variant="secondary">
-            <ChartColumn className="size-4" aria-hidden="true" />
-            View analytics
-          </Button>
-          <Button onClick={openCreateLink}>
-            <Plus className="size-4" aria-hidden="true" />
-            Create link
-          </Button>
-        </>
+        <Button onClick={openCreateLink}>
+          <Plus className="size-4" aria-hidden="true" />
+          Create link
+        </Button>
       }
     >
       {error && !data ? (
@@ -52,6 +47,7 @@ function DashboardContent({ data, loading, onCreateLink }) {
 
   return (
     <div className="space-y-8">
+      <LocalLinksNotice />
       <section aria-labelledby="stats-title">
         <h2 id="stats-title" className="sr-only">
           Your numbers

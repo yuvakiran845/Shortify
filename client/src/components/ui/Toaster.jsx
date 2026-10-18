@@ -4,7 +4,7 @@ import { dismissToast, getToasts, subscribe } from '../../lib/toast';
 import { cn } from '../../lib/cn';
 
 const TYPES = {
-  success: { Icon: CircleCheck, iconClass: 'text-emerald-600' },
+  success: { Icon: CircleCheck, iconClass: 'text-green-600' },
   error: { Icon: CircleAlert, iconClass: 'text-red-600' },
   info: { Icon: Info, iconClass: 'text-brand-600' },
 };

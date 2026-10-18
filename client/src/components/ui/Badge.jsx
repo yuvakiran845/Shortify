@@ -3,7 +3,7 @@ import { cn } from '../../lib/cn';
 const tones = {
   neutral: 'bg-surface-2 text-ink-muted ring-line-strong',
   brand: 'bg-brand-50 text-brand-700 ring-brand-200',
-  success: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  success: 'bg-green-50 text-green-700 ring-green-200',
   warning: 'bg-amber-50 text-amber-800 ring-amber-200',
   danger: 'bg-red-50 text-red-700 ring-red-200',
 };

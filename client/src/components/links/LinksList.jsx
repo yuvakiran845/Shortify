@@ -1,11 +1,11 @@
-import { CalendarClock, CalendarDays, ChartColumn, MousePointerClick, Pencil, QrCode, Trash2 } from 'lucide-react';
+import { CalendarClock, CalendarDays, MousePointerClick, Pencil, QrCode, Trash2 } from 'lucide-react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Table from '../ui/Table';
 import CopyButton from './CopyButton';
 import LinkStatusBadge from './LinkStatusBadge';
 import { formatDate, formatDateTime, formatNumber, withoutProtocol } from '../../lib/format';
-import { analyticsPathForLink, qrPathForLink } from '../../lib/routes';
+import { qrPathForLink } from '../../lib/routes';
 
 function LinkSummary({ link }) {
   return (
@@ -65,15 +65,6 @@ function RowActions({ link, onEdit, onDelete }) {
         title="QR code"
       >
         <QrCode className="size-4" aria-hidden="true" />
-      </Button>
-      <Button
-        to={analyticsPathForLink(link)}
-        variant="secondary"
-        size="sm"
-        aria-label={`View analytics for ${name}`}
-        title="Analytics"
-      >
-        <ChartColumn className="size-4" aria-hidden="true" />
       </Button>
       {onEdit && (
         <Button variant="secondary" size="sm" onClick={() => onEdit(link)} aria-label={`Edit ${name}`} title="Edit">

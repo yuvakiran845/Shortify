@@ -34,10 +34,10 @@ export default function HowItWorks() {
         <ol className="relative mt-14 grid gap-12 md:grid-cols-3 md:gap-8 md:before:absolute md:before:top-6 md:before:right-[16.67%] md:before:left-[16.67%] md:before:h-px md:before:bg-line-strong">
           {STEPS.map(({ icon: Icon, title, description }, index) => (
             <li key={title} className="relative flex flex-col items-center text-center">
-              <span className="grid size-12 place-items-center rounded-full border border-line bg-white text-brand-600 shadow-card">
+              <span className="grid size-12 place-items-center rounded-full bg-brand-600 text-white shadow-brand ring-8 ring-white">
                 <Icon className="size-5" aria-hidden="true" />
               </span>
-              <span className="mt-4 text-xs font-semibold tracking-wide text-coral-600 uppercase">Step {index + 1}</span>
+              <span className="mt-4 text-xs font-semibold tracking-wide text-brand-600 uppercase">Step {index + 1}</span>
               <h3 className="mt-1 text-lg font-semibold text-ink">{title}</h3>
               <p className="mt-2 max-w-xs text-sm leading-6 text-ink-muted">{description}</p>
             </li>

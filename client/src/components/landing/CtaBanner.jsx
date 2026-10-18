@@ -7,7 +7,16 @@ export default function CtaBanner() {
   return (
     <section aria-labelledby="cta-title" className="py-20 sm:py-24">
       <Container>
-        <div className="rounded-2xl bg-brand-600 px-6 py-12 text-center sm:px-12 sm:py-14">
+        <div className="relative isolate overflow-hidden rounded-3xl bg-brand-600 px-6 py-14 text-center shadow-brand sm:px-12 sm:py-16">
+          {/* Decorative: faint dot grid and a lighter glow, both in the brand colour */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 bg-[radial-gradient(rgb(255_255_255/0.14)_1px,transparent_1px)] [background-size:20px_20px]"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute -top-32 left-1/2 -z-10 size-96 -translate-x-1/2 rounded-full bg-brand-400/40 blur-3xl"
+          />
           <h2 id="cta-title" className="text-2xl font-bold tracking-tight text-balance text-white sm:text-3xl">
             Ready to share smarter?
           </h2>

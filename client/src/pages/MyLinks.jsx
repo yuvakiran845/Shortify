@@ -12,6 +12,7 @@ import EditLinkDialog from '../components/links/EditLinkDialog';
 import LinksList from '../components/links/LinksList';
 import LinksListSkeleton from '../components/links/LinksListSkeleton';
 import LinksToolbar from '../components/links/LinksToolbar';
+import LocalLinksNotice from '../components/links/LocalLinksNotice';
 import useAppShell from '../hooks/useAppShell';
 import useLinks from '../hooks/useLinks';
 import usePageTitle from '../hooks/usePageTitle';
@@ -87,6 +88,7 @@ export default function MyLinks() {
         </Button>
       }
     >
+      <LocalLinksNotice className="mb-6" />
       <Card>
         <LinksToolbar
           searchText={searchText}

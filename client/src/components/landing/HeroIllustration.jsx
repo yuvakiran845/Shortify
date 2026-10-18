@@ -61,7 +61,7 @@ export default function HeroIllustration() {
 
       <div aria-hidden="true" className="relative rounded-2xl border border-line bg-white p-5 shadow-raised sm:p-6">
         {/* "Copied" confirmation chip */}
-        <div className="absolute -top-3.5 right-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 shadow-card">
+        <div className="absolute -top-3.5 right-5 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-medium text-brand-700 shadow-card">
           <Check className="size-3.5" />
           Link copied
         </div>

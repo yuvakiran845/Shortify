@@ -131,7 +131,7 @@ export default function ShortenForm({ onCreated, autoFocus = false, showOptions 
               aria-hidden="true"
             />
             More options
-            <span className="font-normal text-ink-subtle">(custom alias, title, expiration)</span>
+            <span className="hidden font-normal text-ink-subtle sm:inline">(custom alias, title, expiration)</span>
           </button>
           {optionsOpen && (
             <div id={optionsId} className="mt-4 space-y-4 rounded-lg border border-line bg-surface p-4">

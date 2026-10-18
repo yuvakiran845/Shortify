@@ -8,38 +8,37 @@
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* Primary blue (brand-600 is the main action color) */
-  --color-brand-50: #eef3fe;
-  --color-brand-100: #dfe8fd;
-  --color-brand-200: #c3d3fb;
-  --color-brand-300: #9cb4f7;
-  --color-brand-400: #6f8ef1;
-  --color-brand-500: #4b70ec;
-  --color-brand-600: #315ce8;
-  --color-brand-700: #2549c8;
-  --color-brand-800: #223ea1;
-  --color-brand-900: #21387f;
-
-  /* Coral accent (decorative only; use coral-600 when it is text on white) */
-  --color-coral-50: #fff1f3;
-  --color-coral-100: #ffe1e5;
-  --color-coral-300: #ffa3af;
-  --color-coral-500: #ef4d61;
-  --color-coral-600: #db2f47;
+  /*
+   * One brand colour: deep teal. brand-600 is the main action colour; it is a
+   * darker teal so white text on buttons passes WCAG AA (5.5:1). Lighter steps
+   * tint backgrounds and icons. Everything else is neutral zinc. Green/amber/red
+   * appear only where they carry meaning (link status, errors, delete).
+   */
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-200: #99f6e4;
+  --color-brand-300: #5eead4;
+  --color-brand-400: #2dd4bf;
+  --color-brand-500: #14b8a6;
+  --color-brand-600: #0f766e;
+  --color-brand-700: #115e59;
+  --color-brand-800: #134e4a;
+  --color-brand-900: #042f2e;
 
   /* Text */
-  --color-ink: #17243a;
-  --color-ink-muted: #45526a;
-  --color-ink-subtle: #5f6b7f;
+  --color-ink: #18181b;
+  --color-ink-muted: #52525b;
+  --color-ink-subtle: #71717a;
 
   /* Surfaces and borders */
-  --color-surface: #f6f8fb;
-  --color-surface-2: #eef2f7;
-  --color-line: #e3e8ef;
-  --color-line-strong: #cfd7e3;
+  --color-surface: #fafafa;
+  --color-surface-2: #f4f4f5;
+  --color-line: #e4e4e7;
+  --color-line-strong: #d4d4d8;
 
-  --shadow-card: 0 1px 2px 0 rgb(23 36 58 / 0.04), 0 1px 3px 0 rgb(23 36 58 / 0.06);
-  --shadow-raised: 0 12px 32px -12px rgb(23 36 58 / 0.18), 0 2px 6px -2px rgb(23 36 58 / 0.06);
+  --shadow-card: 0 1px 2px 0 rgb(24 24 27 / 0.04), 0 1px 3px 0 rgb(24 24 27 / 0.06);
+  --shadow-raised: 0 18px 40px -16px rgb(24 24 27 / 0.22), 0 2px 6px -2px rgb(24 24 27 / 0.06);
+  --shadow-brand: 0 10px 30px -10px rgb(15 118 110 / 0.45);
 
   --animate-toast-in: toast-in 180ms ease-out;
 

@@ -27,7 +27,7 @@ export const QR_SIZES = [
 export const QR_COLORS = [
   { value: '#000000', label: 'Black' },
   { value: '#17243A', label: 'Navy' },
-  { value: '#315CE8', label: 'Blue' },
+  { value: '#115E59', label: 'Teal' },
 ];
 
 const WHITE = [255, 255, 255];

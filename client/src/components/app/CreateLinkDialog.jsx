@@ -49,7 +49,7 @@ export default function CreateLinkDialog({ open, onClose, onCreated }) {
       <div aria-live="polite">
         {created && (
           <div className="mt-5 rounded-lg border border-brand-200 bg-brand-50 p-4">
-            <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+            <p className="flex items-center gap-2 text-sm font-medium text-green-700">
               <CircleCheck className="size-4" aria-hidden="true" />
               Link created
             </p>

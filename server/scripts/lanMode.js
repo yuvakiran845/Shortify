@@ -43,6 +43,14 @@ export function pickLanAddress(interfaces) {
   return candidates.find((ip) => PRIVATE_RANGE.test(ip)) ?? candidates[0] ?? null;
 }
 
+// Older .env files used APP_BASE_URL (now PUBLIC_BASE_URL): rename it in place,
+// or drop it if PUBLIC_BASE_URL already exists, so only one setting remains.
+export function renameLegacyBaseUrl(text) {
+  return /^PUBLIC_BASE_URL=/m.test(text)
+    ? text.replace(/^APP_BASE_URL=[^\r\n]*(\r?\n)?/m, '')
+    : text.replace(/^APP_BASE_URL=/m, 'PUBLIC_BASE_URL=');
+}
+
 // Replaces (or appends) KEY=value lines in .env text, keeping everything else.
 export function setEnvValues(text, values) {
   let result = text;
@@ -64,6 +72,7 @@ function main() {
     return;
   }
   const port = text.match(/^PORT=(\d+)/m)?.[1] ?? '5000';
+  text = renameLegacyBaseUrl(text);
 
   if (process.argv[2] === 'off') {
     writeFileSync(envPath, setEnvValues(text, {

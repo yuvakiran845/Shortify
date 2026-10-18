@@ -18,8 +18,6 @@ import NotFound from './pages/NotFound';
 // Loaded on demand: the QR library is only downloaded when someone opens /qr,
 // keeping the landing page bundle small.
 const QrGenerator = lazy(() => import('./pages/QrGenerator'));
-// The charting library is only downloaded when someone opens Analytics.
-const Analytics = lazy(() => import('./pages/Analytics'));
 // The component style guide only exists in development builds.
 const StyleGuide = import.meta.env.DEV ? lazy(() => import('./pages/StyleGuide')) : null;
 
@@ -64,14 +62,6 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="links" element={<MyLinks />} />
-              <Route
-                path="analytics"
-                element={
-                  <Suspense fallback={<PageLoader label="Loading analytics…" />}>
-                    <Analytics />
-                  </Suspense>
-                }
-              />
             </Route>
           </Route>
         </Routes>

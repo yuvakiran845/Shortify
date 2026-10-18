@@ -1,7 +1,12 @@
 // Small wrapper around fetch for talking to the Shortify API.
 // It always returns parsed JSON, or throws an ApiError with a user-friendly message.
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+// Where the Express API lives (its routes start with /api):
+// - "/api" (default): the API is on the same address as the website (development
+//   through the Vite proxy, the one-service deployment, or a host that proxies /api).
+// - "https://your-api.onrender.com/api": the website is hosted somewhere else.
+// VITE_API_URL is the older name of the same setting.
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
 const UNREACHABLE_MESSAGE = 'Could not reach the Shortify server. Check your connection and try again.';
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);

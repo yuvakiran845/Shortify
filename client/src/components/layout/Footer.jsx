@@ -39,7 +39,7 @@ export default function Footer() {
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-sm leading-6 text-ink-muted">
-              Shorten links, generate QR codes, and see how every link performs, all in one place.
+              Short links and QR codes for your business, campaigns, and everyday sharing.
             </p>
           </div>
 

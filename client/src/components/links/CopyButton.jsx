@@ -49,7 +49,7 @@ export default function CopyButton({
       aria-label={iconOnly ? `${currentLabel}: ${text}` : undefined}
       title={iconOnly ? currentLabel : undefined}
     >
-      <Icon className={copied ? 'size-4 text-emerald-600' : 'size-4'} aria-hidden="true" />
+      <Icon className={copied ? 'size-4 text-green-600' : 'size-4'} aria-hidden="true" />
       {!iconOnly && currentLabel}
     </Button>
   );

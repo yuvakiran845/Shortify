@@ -5,6 +5,7 @@ import { QrCode } from '../models/QrCode.js';
 import { config } from '../config/env.js';
 import { HttpError } from '../utils/HttpError.js';
 import { generateShortCode } from '../utils/shortCode.js';
+import { RESERVED_ALIASES } from '../utils/linkFields.js';
 import { escapeRegex, LINK_SORTS } from '../utils/listQuery.js';
 import { visitorIdFor } from './visitorService.js';
 
@@ -15,7 +16,13 @@ export const NOT_DELETED = { deletedAt: null };
 
 const isDuplicateShortCodeError = (error) => error?.code === 11000 && Boolean(error.keyPattern?.shortCode);
 
-export const buildShortUrl = (shortCode) => `${config.publicBaseUrl}/${shortCode}`;
+/**
+ * The full public short URL for a code, e.g. https://shortify.onrender.com/aB7xK9p.
+ * Built from PUBLIC_BASE_URL every time (MongoDB stores only the code), so
+ * changing the domain updates every existing link, and no record ever holds
+ * a hard-coded localhost address.
+ */
+export const buildShortUrl = (shortCode) => new URL(encodeURIComponent(shortCode), `${config.publicBaseUrl}/`).href;
 
 // "disabled" wins over "expired": a switched-off link is off regardless of its date.
 export function linkStatus(link, now = new Date()) {
@@ -78,8 +85,12 @@ export async function createShortLink(
   }
 
   for (let attempt = 1; attempt <= MAX_CODE_ATTEMPTS; attempt += 1) {
+    const shortCode = generateCode();
+    // Never hand out a word the app uses for its own pages (e.g. "shorten"),
+    // so a short link can never hide a page when the website is served from here.
+    if (RESERVED_ALIASES.has(shortCode.toLowerCase())) continue;
     try {
-      return await Link.create({ ...fields, shortCode: generateCode() });
+      return await Link.create({ ...fields, shortCode });
     } catch (error) {
       if (!isDuplicateShortCodeError(error)) throw error;
     }

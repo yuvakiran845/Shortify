@@ -11,7 +11,7 @@ Shortify is a full-stack URL shortener and QR code generator built with React, N
 - **Accounts**: sign-up/login with bcrypt-hashed passwords, JWT session in an HttpOnly cookie, CSRF protection, logout that revokes the session everywhere. Links created before signing up move into the new account.
 - **My links**: search (title, URL, short code), filter (status, clicks), sort, and pagination, all done in MongoDB. Edit destination, title, alias, on/off, and expiry; delete with a confirmation.
 - **Dashboard**: total links, total clicks, active links, QR codes, and recent links.
-- **Analytics**: clicks over time (in the user's time zone, with empty days shown), unique visitors, top links, referring sites, and devices; per link or for all links; 7/30/90 days or a custom range.
+- **Click counts**: every link shows how many real visits it got (bots, link previews, and quick repeat clicks are not counted), and the dashboard shows the totals.
 - **QR codes**: for any URL or one of your short links, in three colors and three sizes, downloaded as PNG. Scannability is verified by decoding the generated pixels in tests. Logged-in users get a QR history.
 - **Privacy-conscious click tracking**: no IP addresses or full user agents are stored; bots, link previews, prefetches, and quick repeat clicks are not counted.
 - **Responsive and accessible**: works from 375 px phones to desktops, keyboard-friendly dialogs and menus, labelled forms, visible focus states.
@@ -157,9 +157,11 @@ The address can change when you switch networks: run `npm run lan` again. `npm r
 | `/` | everyone | Public website (navbar + footer) |
 | `/login`, `/signup` | logged-out visitors (logged-in users are sent to `/dashboard`) | Public website |
 | `/shorten`, `/qr` | everyone | App shell when logged in, public website otherwise |
-| `/dashboard` (Overview), `/links` (My links), `/analytics` | logged-in users only (others go to `/login` and come back afterwards) | App shell |
+| `/dashboard` (Overview), `/links` (My links) | logged-in users only (others go to `/login` and come back afterwards) | App shell |
 
-The **app shell** has a fixed sidebar on desktop (Create link, Overview, My links, QR codes, account menu) and a top bar with a slide-in drawer on phones. The **Create link** dialog works from every app page; Overview and My links refresh automatically after a link is created. Its **More options** section (also on `/shorten` when logged in) sets a custom alias, a title, and an expiry date. Each row on **My links** has Copy, QR code, Analytics, **Edit** (destination, title, alias, on/off, expiry) and **Delete** (with a confirmation that lists exactly what will be removed).
+**Design:** one brand colour (deep teal, `#0F766E`) on neutral zinc greys; green, amber, and red appear only where they carry meaning (link status, errors, delete). All colours are design tokens in `client/src/index.css`.
+
+The **app shell** has a fixed sidebar on desktop (Create link, Overview, My links, QR codes, account menu) and a top bar with a slide-in drawer on phones. The **Create link** dialog works from every app page; Overview and My links refresh automatically after a link is created. Its **More options** section (also on `/shorten` when logged in) sets a custom alias, a title, and an expiry date. Each row on **My links** has Copy, QR code, **Edit** (destination, title, alias, on/off, expiry) and **Delete** (with a confirmation that lists exactly what will be removed).
 
 ## Environment variables
 
@@ -171,6 +173,8 @@ The **app shell** has a fixed sidebar on desktop (Create link, Overview, My link
 | `NODE_ENV` | `development` | `production` requires HTTPS for `PUBLIC_BASE_URL` and `CLIENT_ORIGIN`, and secure cookies |
 | `MONGO_URI` | `mongodb://127.0.0.1:27017/shortify` | MongoDB connection string |
 | `PUBLIC_BASE_URL` | `http://localhost:5000` | The short-link domain: links are `<PUBLIC_BASE_URL>/<code>`, e.g. `https://yourdomain.com/aB7xK9p`. Address only (no path). In production it must be a public HTTPS domain that points at this API (see [Use your own short domain](#use-your-own-short-domain)). |
+| `CLIENT_DIST_DIR` | *(unset)* | Folder with the built website (`client/dist`). When set, this server also serves the site: one address for the website, API, and short links (deployment option A). |
+| `COOKIE_SAME_SITE` | `lax` | `none` only for a website on another site calling the API directly (option B, HTTPS only). |
 | `CLIENT_ORIGIN` | `http://localhost:5173` | Frontend origin(s) allowed by CORS, comma-separated. Origins only (no path); a trailing slash is removed. Required in production. |
 | `TRUST_PROXY` | `0` | Number of reverse proxies in front of the API (usually `1` when hosted) |
 | `API_LIMIT_PER_MINUTE` | `300` | All API requests from one IP address per minute (safety net for every endpoint) |
@@ -187,7 +191,7 @@ The **app shell** has a fixed sidebar on desktop (Create link, Overview, My link
 
 | Variable | Example | Purpose |
 |---|---|---|
-| `VITE_API_URL` | `https://api.example.com/api` | API base URL for production builds. Leave empty in development. |
+| `VITE_API_BASE_URL` | `/api` | Where the API is. Keep `/api` in development (Vite proxy) and in deployment option A; set `https://<your-api>.onrender.com/api` only when the website is hosted separately and calls the API directly. |
 
 ## API
 
@@ -332,6 +336,8 @@ QR codes are drawn in the browser, so anyone can generate and download them. Log
 
 ### `GET /api/analytics`
 
+*The web app no longer has an Analytics page; this endpoint is kept for API clients and future use.*
+
 **Requires login.** Click analytics for a date range, computed from recorded click events.
 
 | Query parameter | Meaning |
@@ -460,34 +466,73 @@ Visitors can shorten links without an account. Such links belong to the browser 
 
 ```bash
 cd server && npm run lint   # ESLint
-cd server && npm test       # 312 API + unit tests; needs MongoDB, uses the separate "shortify_test" database
+cd server && npm test       # 325 API + unit tests; needs MongoDB, uses the separate "shortify_test" database
 cd client && npm run lint   # ESLint (incl. React hooks rules)
-cd client && npm test       # 87 unit tests, incl. decoding generated QR codes with jsQR
+cd client && npm test       # 74 unit tests, incl. decoding generated QR codes with jsQR
 cd client && npm run build  # production build
+cd e2e && npm test          # 18 Playwright browser tests (see below)
 ```
+
+**End-to-end browser tests (Playwright).** `e2e/` drives the real app in Chrome: landing page and FAQ, shortening as a visitor (copy to clipboard, redirect), URL validation, 404 pages, sign up / log out / log in back to the requested page, wrong-password and duplicate-email errors, guest links moving into a new account, creating links with alias + title + expiry, alias conflicts, editing (switch off, rename: old URL 404, new URL 410), deleting with confirmation, search and filters, click counting (bots ignored), QR generation and PNG download (file name and pixel size checked), plus a phone project (Pixel 7) for the mobile menu, link cards, navigation drawer, and no sideways scrolling.
+
+```bash
+cd e2e
+npm install
+npm test                 # headless; add --headed to watch, or "npm run report" for the HTML report
+```
+
+Playwright starts its own API (port 5100) and a production build of the frontend (port 5174) against a throwaway `shortify_e2e` database that is emptied before and after the run, so development data is never touched (MongoDB must be running). Locally it uses your installed Google Chrome; on CI it installs Playwright's Chromium. Failures keep a screenshot and a step-by-step trace (`npx playwright show-trace <file>`). To test the deployment shape (deployment option A: one server serving the website, API, and short links), run `E2E_SINGLE_SERVICE=1 npx playwright test` (PowerShell: `$env:E2E_SINGLE_SERVICE=1; npx playwright test`).
 
 **Smoke test (end to end).** With the API running, `cd server && npm run smoke` walks through the real user flows over HTTP like a browser would (41 checks): guest link → redirect → sign-up claims it → alias, conflict, click counting, dashboard and analytics numbers, QR history, edit/rename/switch off, another user getting `404` for everything, CSRF rejection, delete, logout revoking a copied session cookie, and login. Point it at a deployment with `npm run smoke -- https://your-site.netlify.app/api`. It leaves two `smoke-...@example.com` accounts behind (there is no delete-account endpoint).
 
-**CI.** `.github/workflows/ci.yml` runs the server lint and tests against a MongoDB 7 service container, and the client lint, tests, and build, on every push to `main` and every pull request.
+**CI.** `.github/workflows/ci.yml` runs the server lint and tests against a MongoDB 7 service container, the client lint, tests, and build, and the Playwright browser tests, on every push to `main` and every pull request.
 
 What the automated tests cover: URL validation and normalization, short-code collisions and retries, aliases (rules, conflicts, race between two requests), redirects and their status codes, click counting rules (bots, HEAD, prefetch, repeat clicks), analytics math and time zones, dashboard totals, authentication (hashing, sessions, revocation, timing-safe login), CSRF, CORS, rate limits, ownership of every endpoint, guest link claiming, editing and deleting (what happens to clicks and QR history), error handling, and QR code scannability.
 
 ## Deployment
 
-Shortify deploys as two services: the **API** (Node host, e.g. Render) and the **frontend** (static host, e.g. Netlify), plus **MongoDB Atlas**. Short links are served by the API, so its URL is also the short-link domain (`PUBLIC_BASE_URL`).
+**Why links say `localhost` until you deploy.** Every short link is `<PUBLIC_BASE_URL>/<code>`, built by the server. On your computer `PUBLIC_BASE_URL` is `http://localhost:5000`, and "localhost" always means "this device", so those links cannot open on another phone or computer. Changing the displayed text would not help: the server itself must be reachable on the internet. Once Shortify runs on a public host and `PUBLIC_BASE_URL` is that host's HTTPS address, every link (old ones too, because MongoDB stores only the code) becomes `https://<your-host>/<code>` and works on any device. Until then, the dashboard shows a notice that links only work on this computer.
 
-**Why the frontend proxies `/api`.** The session cookie is `SameSite=Lax`, so browsers only send it to the *same site* as the page. `*.netlify.app` and `*.onrender.com` are separate sites (both are on the Public Suffix List), so the frontend calls `/api` on its own domain and Netlify forwards those requests to the API (`netlify.toml`). Alternative for a real launch: custom domains on one site, such as `app.example.com` and `api.example.com` (see step 4).
+### Option A (recommended): one Render service + MongoDB Atlas
 
-1. **Database**: set up MongoDB Atlas as described in [MongoDB setup](#mongodb-setup).
-2. **API on Render**: push the repository to GitHub, then in Render choose *New → Blueprint* and select the repository; `render.yaml` creates the `shortify-api` web service (root `server/`, `npm ci --omit=dev`, `npm start`, health check `/api/health`, `NODE_ENV=production`, `TRUST_PROXY=1`, and a generated `JWT_SECRET`). Enter the secret values when asked:
-   - `MONGO_URI`: the Atlas connection string
-   - `PUBLIC_BASE_URL`: the service URL, e.g. `https://shortify-api.onrender.com` (known after the first deploy; update it and redeploy)
-   - `CLIENT_ORIGIN`: the frontend URL from step 3, e.g. `https://shortify.netlify.app`
+One Express server serves the website, the API (`/api/...`), and the short links (`/<code>`) from the same public address, e.g. `https://shortify.onrender.com`. No CORS or cross-site cookie setup is needed, and there is only one service to deploy. `render.yaml` describes it.
 
-   Check `https://<api-host>/api/health` returns `{"status":"ok","database":"connected"}`. In production the server refuses to start with an `http://` `PUBLIC_BASE_URL`/`CLIENT_ORIGIN` or a missing/weak `JWT_SECRET`, and cookies are sent with `Secure`.
-3. **Frontend on Netlify**: edit `netlify.toml` and replace `YOUR-API-HOST` with the API host from step 2, commit, then *Add new site → Import from Git*. Netlify reads the build settings from `netlify.toml` (base `client/`, `npm run build`, publish `dist`). Leave `VITE_API_URL` unset: the app calls `/api` on its own domain. The `/*` fallback makes deep links such as `/dashboard` work on refresh.
-4. **Custom domains (optional, recommended for production)**: with `app.example.com` on Netlify and `api.example.com` (or a short domain) on Render, the two are the same site, so the proxy is not needed: set `VITE_API_URL=https://api.example.com/api` in Netlify, `CLIENT_ORIGIN=https://app.example.com` and `PUBLIC_BASE_URL=https://api.example.com` in Render, and remove the `/api/*` rule from `netlify.toml`.
-5. **Verify**: run `cd server && npm run smoke -- https://<your-site>.netlify.app/api`, then sign up in the browser, create a link, open it, and check the dashboard.
+1. **MongoDB Atlas** (see [MongoDB setup](#mongodb-setup)): create a database user, allow network access from `0.0.0.0/0` (Render's addresses change; the strong password protects the database), and copy the connection string with the database name: `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/shortify?retryWrites=true&w=majority`.
+2. **GitHub**: create an empty repository and push this project (`git remote add origin <url>`, then `git push -u origin main`). `.env` files are ignored by git, so no secret is uploaded.
+3. **Render → New → Blueprint** → choose the repository. Render reads `render.yaml` and creates the `shortify` web service:
+   - build: `npm ci --prefix client --include=dev && npm run build --prefix client && npm ci --prefix server --omit=dev`
+   - start: `node server/src/server.js` · health check: `/api/health`
+   - set for you: `NODE_ENV=production`, `CLIENT_DIST_DIR=client/dist`, `TRUST_PROXY=1`, and a generated `JWT_SECRET`
+
+   Render asks for the two secret values:
+   - `MONGO_URI`: the Atlas connection string from step 1
+   - `PUBLIC_BASE_URL`: the service's address, `https://shortify.onrender.com` if that name is free. The real address is shown at the top of the service page after it is created; if it differs (Render adds a suffix when a name is taken), update `PUBLIC_BASE_URL` under *Environment* and redeploy.
+4. **Check** `https://<your-service>.onrender.com/api/health` returns `{"status":"ok","database":"connected"}`, then open the site, sign up, and create a link: it starts with your public address. In production the server refuses to start if `PUBLIC_BASE_URL` is missing, not HTTPS, has a path, or is `localhost`/a private IP, so a wrong value shows up as a failed deploy with a clear message in Render's logs instead of producing broken links.
+5. **Test from other devices**: open a short link on your phone using mobile data (a different network) and in a private/incognito window; it should redirect, and its click count should go up on the dashboard. Scan a downloaded QR code with the phone camera. Also run the end-to-end check from your computer: `cd server && npm run smoke -- https://<your-service>.onrender.com/api` (it leaves two `smoke-...@example.com` test accounts).
+
+### Option B: website on a separate host (e.g. Netlify) + API on Render
+
+Use this only if you want the website hosted separately. Deploy the API as in option A but without `CLIENT_DIST_DIR`, and set `CLIENT_ORIGIN` to the website's address. Then pick one:
+
+- **Proxy (recommended for option B)**: the website calls `/api` on its own domain and Netlify forwards it to Render. Edit `netlify.toml` (replace `YOUR-API-HOST`), leave `VITE_API_BASE_URL` unset or `/api`, and import the repository in Netlify. Cookies stay first-party, so login works in every browser.
+- **Direct calls**: set `VITE_API_BASE_URL=https://<your-api>.onrender.com/api` in Netlify, and on Render `CLIENT_ORIGIN=https://<your-site>.netlify.app` and `COOKIE_SAME_SITE=none`. The session cookie is then a cross-site cookie: it works in Chrome and Firefox today, but browsers that block third-party cookies (Safari, or strict privacy settings) will not keep users logged in. Prefer option A or the proxy.
+
+In option B the short links still live on the API's address, so `PUBLIC_BASE_URL` is the Render address, not the Netlify one.
+
+### Where each setting goes
+
+| Setting | Where | Value |
+|---|---|---|
+| `MONGO_URI` | Render → service → Environment | Atlas connection string (secret) |
+| `PUBLIC_BASE_URL` | Render → service → Environment | `https://<your-service>.onrender.com` (or your own domain) |
+| `JWT_SECRET` | Render (generated by the Blueprint) | 32+ random characters (secret) |
+| `NODE_ENV`, `TRUST_PROXY`, `CLIENT_DIST_DIR` | Render (set by `render.yaml`) | `production`, `1`, `client/dist` |
+| `CLIENT_ORIGIN` | Render, option B only | the website's address, e.g. `https://<your-site>.netlify.app` |
+| `COOKIE_SAME_SITE` | Render, option B direct calls only | `none` |
+| `VITE_API_BASE_URL` | Netlify → Site configuration → Environment variables, option B direct calls only | `https://<your-api>.onrender.com/api` (otherwise leave unset: the app uses `/api`) |
+| Network access | MongoDB Atlas → Network Access | `0.0.0.0/0` for Render (or Render's outbound IPs on paid plans) |
+
+Templates with placeholders only: `server/.env.example` (development), `server/.env.production.example`, `client/.env.example`, `client/.env.production.example`. Never commit a real `.env`, the Atlas password, or the JWT secret.
 
 Hosting notes:
 - Render's free plan sleeps after inactivity; the first request after a pause (including a short-link redirect) can take tens of seconds.
@@ -512,7 +557,7 @@ Recommended layout with your own domain (the same pattern as big shorteners): th
 | Address | Points to | Purpose |
 |---|---|---|
 | `yourdomain.com` | Render web service (the API) | short links `https://yourdomain.com/<code>`, the API at `/api`; `/` sends visitors to the app |
-| `app.yourdomain.com` | Netlify site (the frontend) | sign up, dashboard, My links, analytics, QR codes |
+| `app.yourdomain.com` | Netlify site (the frontend) | sign up, dashboard, My links, QR codes |
 
 Because both are on `yourdomain.com`, the browser treats them as the same site, so the session cookie works without the Netlify `/api` proxy.
 
@@ -528,7 +573,7 @@ Steps (after the normal [Deployment](#deployment) works on the free subdomains):
 3. **Netlify → your site → Domain management → Add** `app.yourdomain.com`, then add the `CNAME` record Netlify shows (`app` → `<your-site>.netlify.app`). DNS changes can take up to a day to spread.
 4. **Settings**:
    - Render: `PUBLIC_BASE_URL=https://yourdomain.com`, `CLIENT_ORIGIN=https://app.yourdomain.com`. If you turn on Cloudflare's proxy (orange cloud) in front of Render, there is one more proxy hop: set `TRUST_PROXY=2`.
-   - Netlify: `VITE_API_URL=https://yourdomain.com/api`, and delete the `/api/*` rule from `netlify.toml` (the app now calls the API directly).
+   - Netlify: `VITE_API_BASE_URL=https://yourdomain.com/api`, and delete the `/api/*` rule from `netlify.toml` (the app now calls the API directly).
    - Redeploy both. Existing links switch to the new domain automatically (short URLs are built from the setting on every request), and saved QR codes are updated when the API starts. QR codes that were already printed keep the old address.
 5. **Check**: `cd server && npm run smoke -- https://yourdomain.com/api`. While DNS is still spreading, you can already test the server itself with `--redirect-via https://<your-service>.onrender.com`.
 
@@ -559,6 +604,6 @@ Using another company's shortening API instead (Bitly, TinyURL, encurtador.dev, 
 
 ## Tech stack
 
-- Frontend: React 19, React Router 7, Vite 8, Tailwind CSS v4, Lucide icons, Inter (self-hosted), qrcode, Recharts (Analytics page only, lazy-loaded)
+- Frontend: React 19, React Router 7, Vite 8, Tailwind CSS v4, Lucide icons, Inter (self-hosted), qrcode
 - Backend: Node.js, Express 5, Mongoose 9, Helmet, express-rate-limit, CORS
 - Testing: Node's built-in test runner, supertest, jsQR (QR decoding), ESLint, GitHub Actions

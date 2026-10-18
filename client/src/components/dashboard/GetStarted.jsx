@@ -45,7 +45,7 @@ export default function GetStarted({ onCreateLink }) {
               <span className="grid size-9 place-items-center rounded-full bg-brand-50 text-brand-600">
                 <Icon className="size-[18px]" aria-hidden="true" />
               </span>
-              <span className="text-xs font-semibold tracking-wide text-coral-600 uppercase">Step {index + 1}</span>
+              <span className="text-xs font-semibold tracking-wide text-brand-600 uppercase">Step {index + 1}</span>
             </div>
             <h3 className="mt-4 font-semibold text-ink">{title}</h3>
             <p className="mt-1 flex-1 text-sm leading-6 text-ink-muted">{text}</p>

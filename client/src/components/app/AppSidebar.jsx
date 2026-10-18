@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { ChartColumn, LayoutDashboard, Link2, Plus, QrCode } from 'lucide-react';
+import { LayoutDashboard, Link2, Plus, QrCode } from 'lucide-react';
 import Logo from '../layout/Logo';
 import UserMenu from '../layout/UserMenu';
 import Button from '../ui/Button';
@@ -9,7 +9,6 @@ import { ROUTES } from '../../lib/routes';
 const APP_NAV = [
   { label: 'Overview', to: ROUTES.dashboard, icon: LayoutDashboard },
   { label: 'My links', to: ROUTES.links, icon: Link2 },
-  { label: 'Analytics', to: ROUTES.analytics, icon: ChartColumn },
   { label: 'QR codes', to: ROUTES.qr, icon: QrCode },
 ];
 

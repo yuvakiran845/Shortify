@@ -54,25 +54,25 @@ function renderPage({ status, title, message }) {
 <title>${escapeHtml(title)} · Shortify</title>
 <style>
   *{box-sizing:border-box;margin:0}
-  body{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:#f6f8fb;color:#17243a;
+  body{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:#fafafa;color:#18181b;
     font-family:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
-  main{width:100%;max-width:440px;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:40px 32px;text-align:center;
-    box-shadow:0 12px 32px -12px rgb(23 36 58/.18)}
-  .logo{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:#17243a;text-decoration:none}
-  .code{margin-top:28px;font-size:13px;font-weight:600;color:#315ce8}
+  main{width:100%;max-width:440px;background:#fff;border:1px solid #e4e4e7;border-radius:16px;padding:40px 32px;text-align:center;
+    box-shadow:0 12px 32px -12px rgb(24 24 27/.18)}
+  .logo{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:#18181b;text-decoration:none}
+  .code{margin-top:28px;font-size:13px;font-weight:600;color:#0f766e}
   h1{margin-top:6px;font-size:24px;line-height:1.25;letter-spacing:-.01em}
-  p{margin-top:10px;color:#45526a;line-height:1.6;font-size:15px}
+  p{margin-top:10px;color:#52525b;line-height:1.6;font-size:15px}
   .actions{margin-top:28px;display:flex;flex-direction:column;gap:10px}
   a.btn{display:block;padding:12px 16px;border-radius:8px;font-weight:600;font-size:15px;text-decoration:none}
-  .primary{background:#315ce8;color:#fff}.primary:hover{background:#2549c8}
-  .secondary{border:1px solid #cfd7e3;color:#17243a}.secondary:hover{background:#f6f8fb}
-  a:focus-visible{outline:2px solid #315ce8;outline-offset:2px}
+  .primary{background:#0f766e;color:#fff}.primary:hover{background:#115e59}
+  .secondary{border:1px solid #d4d4d8;color:#18181b}.secondary:hover{background:#fafafa}
+  a:focus-visible{outline:2px solid #0f766e;outline-offset:2px}
 </style>
 </head>
 <body>
 <main>
   <a class="logo" href="${home}">
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#315CE8"/><g transform="translate(4 4)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#fff"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="#FFA3AF"/></g></svg>
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0F766E"/><g transform="translate(4 4)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#fff"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="#fff" stroke-opacity="0.7"/></g></svg>
     Shortify
   </a>
   <p class="code">Error ${status}</p>

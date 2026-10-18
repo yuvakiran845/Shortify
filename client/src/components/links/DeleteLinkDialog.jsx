@@ -61,7 +61,7 @@ export default function DeleteLinkDialog({ link, onClose, onDeleted }) {
             </li>
             <li>
               Its click history ({formatNumber(link.clickCount)} {link.clickCount === 1 ? 'click' : 'clicks'}) is
-              removed from your analytics.
+              deleted.
             </li>
             <li>QR codes made for this link are removed from your QR history.</li>
             <li>

@@ -1,6 +1,7 @@
+import { Link } from 'react-router';
 import { ChevronDown } from 'lucide-react';
 import Container from '../layout/Container';
-import SectionHeading from './SectionHeading';
+import { ROUTES } from '../../lib/routes';
 
 const FAQS = [
   {
@@ -36,19 +37,30 @@ const FAQS = [
 export default function Faq() {
   return (
     <section id="faq" aria-labelledby="faq-title" className="scroll-mt-16 border-t border-line bg-surface py-20 sm:py-24">
-      <Container size="narrow">
-        <SectionHeading id="faq-title" eyebrow="FAQ" title="Frequently asked questions" />
+      <Container className="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
+        <div>
+          <p className="text-sm font-semibold text-brand-600">FAQ</p>
+          <h2 id="faq-title" className="mt-2 text-3xl font-bold tracking-tight text-balance text-ink sm:text-4xl">
+            Frequently asked questions
+          </h2>
+          <p className="mt-4 text-base leading-7 text-ink-muted">
+            Everything you need to know about short links and QR codes. Ready to try it?{' '}
+            <Link to={ROUTES.signup} className="font-semibold text-brand-700 hover:underline">
+              Create a free account
+            </Link>
+            .
+          </p>
+        </div>
 
         {/* Native <details>/<summary> gives keyboard and screen-reader support for free */}
-        <div className="mt-12 divide-y divide-line rounded-xl border border-line bg-white shadow-card">
+        <div className="divide-y divide-line rounded-2xl border border-line bg-white shadow-card">
           {FAQS.map(({ question, answer }) => (
             <details key={question} className="group px-5 sm:px-6">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-md py-5 text-left text-base font-medium text-ink [&::-webkit-details-marker]:hidden">
                 {question}
-                <ChevronDown
-                  className="size-5 shrink-0 text-ink-subtle transition-transform group-open:rotate-180"
-                  aria-hidden="true"
-                />
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-surface-2 text-ink-subtle transition-colors group-open:bg-brand-50 group-open:text-brand-600">
+                  <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                </span>
               </summary>
               <p className="-mt-1 pb-5 text-sm leading-6 text-ink-muted">{answer}</p>
             </details>

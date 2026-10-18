@@ -1,4 +1,6 @@
-# Netlify settings for the React frontend (client/). See README → Deployment.
+# OPTIONAL: only if you host the website separately on Netlify. With the
+# recommended one-service deployment (render.yaml) you do not need Netlify at all.
+# Netlify settings for the React frontend (client/). See README → Deployment, option B.
 
 [build]
   base = "client"
@@ -8,7 +10,7 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# API calls go through Netlify to the Express API, so the browser only ever
+# Leave VITE_API_BASE_URL unset (or /api): API calls go through Netlify to the Express API, so the browser only ever
 # talks to this site. That keeps the session cookie (SameSite=Lax) first-party;
 # a direct call from *.netlify.app to *.onrender.com would be cross-site and
 # the browser would not send the cookie.

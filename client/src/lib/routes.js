@@ -2,7 +2,6 @@
 export const ROUTES = {
   home: '/',
   dashboard: '/dashboard',
-  analytics: '/analytics',
   shorten: '/shorten',
   links: '/links',
   qr: '/qr',
@@ -16,9 +15,6 @@ export const qrPathForLink = (link, { byId = true } = {}) =>
   byId
     ? `${ROUTES.qr}?link=${encodeURIComponent(link.id)}`
     : `${ROUTES.qr}?url=${encodeURIComponent(link.shortUrl)}`;
-
-// Analytics for one of the user's links.
-export const analyticsPathForLink = (link) => `${ROUTES.analytics}?link=${encodeURIComponent(link.id)}`;
 
 // In-page sections of the landing page.
 export const SECTIONS = {

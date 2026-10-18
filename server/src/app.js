@@ -14,6 +14,7 @@ import { qrRoutes } from './routes/qrRoutes.js';
 import { dashboardRoutes } from './routes/dashboardRoutes.js';
 import { analyticsRoutes } from './routes/analyticsRoutes.js';
 import { redirectRoutes } from './routes/redirectRoutes.js';
+import { websiteRoutes } from './routes/websiteRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 /**
@@ -28,13 +29,16 @@ export function createApp({
   clickDedupeWindowMs = config.clickDedupeWindowMs,
   loginLimitPer15Minutes = config.loginLimitPer15Minutes,
   registerLimitPerHour = config.registerLimitPerHour,
+  clientDistDir = config.clientDistDir,
 } = {}) {
   const app = express();
 
   // Behind a hosting proxy, use the real visitor IP from X-Forwarded-For (needed for rate limiting).
   app.set('trust proxy', config.trustProxy);
 
-  app.use(helmet()); // secure HTTP headers
+  // Secure HTTP headers. "upgrade-insecure-requests" asks browsers to load
+  // everything over HTTPS, so it is only sent in production (where HTTPS exists).
+  app.use(helmet({ contentSecurityPolicy: { directives: { upgradeInsecureRequests: config.isProduction ? [] : null } } }));
   app.use(express.json({ limit: '10kb' }));
 
   // ----- JSON API -----
@@ -73,6 +77,9 @@ export function createApp({
   api.use('/analytics', analyticsRoutes());
   api.use(notFound); // unknown /api/... paths get a JSON 404, never the redirect handler
   app.use('/api', api);
+
+  // ----- The React website, when this server also hosts it (CLIENT_DIST_DIR) -----
+  if (clientDistDir) app.use(websiteRoutes(clientDistDir));
 
   // ----- Public short links: GET /:code -----
   app.use(redirectRoutes({ redirectLimitPerMinute, clickDedupeWindowMs }));
