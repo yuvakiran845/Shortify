@@ -38,7 +38,7 @@ export function isLocalOnlyHost(hostname) {
 
 /**
  * PUBLIC_BASE_URL: the public address short links are built from,
- * "<PUBLIC_BASE_URL>/<code>", e.g. https://shortify.onrender.com/aB7xK9p.
+ * "<PUBLIC_BASE_URL>/<code>", e.g. https://your-project.vercel.app/aB7xK9p.
  * It must be the domain that serves this API's redirect route (see README → Deployment).
  * In production it must be a public HTTPS domain: localhost or a private IP
  * would give links that other devices cannot open.
@@ -48,14 +48,14 @@ export function parsePublicBaseUrl(value, { production = isProduction } = {}) {
   try {
     url = new URL(value);
   } catch {
-    throw new Error('PUBLIC_BASE_URL must be an absolute URL, for example https://shortify.onrender.com');
+    throw new Error('PUBLIC_BASE_URL must be an absolute URL, for example https://your-project.vercel.app');
   }
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
     throw new Error('PUBLIC_BASE_URL must start with http:// or https://');
   }
   // Short links are served at the root ("/<code>"), so a path would make every link 404.
   if (url.pathname !== '/' || url.search || url.hash) {
-    throw new Error('PUBLIC_BASE_URL must be only the address, without a path, for example https://shortify.onrender.com');
+    throw new Error('PUBLIC_BASE_URL must be only the address, without a path, for example https://your-project.vercel.app');
   }
   if (production) {
     if (url.protocol !== 'https:') throw new Error('PUBLIC_BASE_URL must use https:// in production');
@@ -63,11 +63,11 @@ export function parsePublicBaseUrl(value, { production = isProduction } = {}) {
     const isIpAddress = /^\d{1,3}(\.\d{1,3}){3}$/.test(url.hostname);
     if (isLocalOnlyHost(url.hostname) || isIpAddress || !url.hostname.includes('.')) {
       throw new Error(
-        'PUBLIC_BASE_URL must be a public domain in production (e.g. https://shortify.onrender.com), not localhost or a local/private IP address',
+        'PUBLIC_BASE_URL must be a public domain in production (e.g. https://your-project.vercel.app), not localhost or a local/private IP address',
       );
     }
   }
-  return url.origin; // "https://shortify.onrender.com" (no trailing slash; a non-default port is kept)
+  return url.origin; // "https://your-project.vercel.app" (no trailing slash; a non-default port is kept)
 }
 
 /**
@@ -88,7 +88,7 @@ export function readPublicBaseUrl({ env = process.env, production = isProduction
   if (value) return parsePublicBaseUrl(value, { production });
   if (production) {
     throw new Error(
-      'PUBLIC_BASE_URL is required in production: the public HTTPS address of this server, e.g. https://shortify.onrender.com',
+      'PUBLIC_BASE_URL is required in production: the public HTTPS address of this server, e.g. https://your-project.vercel.app',
     );
   }
   console.warn(`PUBLIC_BASE_URL is not set: short links will use http://localhost:${port} (this computer only).`);

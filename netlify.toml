@@ -1,6 +1,6 @@
 # OPTIONAL: only if you host the website separately on Netlify. With the
-# recommended one-service deployment (render.yaml) you do not need Netlify at all.
-# Netlify settings for the React frontend (client/). See README → Deployment, option B.
+# recommended Vercel deployment (vercel.json) you do not need Netlify at all.
+# Netlify settings for the React frontend (client/). See README → Deployment, option C.
 
 [build]
   base = "client"

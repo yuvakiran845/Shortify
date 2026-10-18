@@ -1,0 +1,9 @@
+{
+  "name": "shortify",
+  "private": true,
+  "description": "Root of the Shortify repository: lets Vercel run api/index.js as an ES module. The apps live in client/ and server/.",
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  }
+}

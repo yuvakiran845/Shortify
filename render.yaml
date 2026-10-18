@@ -1,3 +1,4 @@
+# ALTERNATIVE to the recommended Vercel deployment (vercel.json): use one or the other.
 # Render Blueprint: ONE web service that serves the website, the API (/api/...),
 # and the short links (/<code>) from the same public HTTPS address,
 # e.g. https://shortify.onrender.com/aB7xK9p. See README → Deployment.

@@ -4,7 +4,7 @@
 // Where the Express API lives (its routes start with /api):
 // - "/api" (default): the API is on the same address as the website (development
 //   through the Vite proxy, the one-service deployment, or a host that proxies /api).
-// - "https://your-api.onrender.com/api": the website is hosted somewhere else.
+// - "https://your-api.example.com/api": the website is hosted somewhere else.
 // VITE_API_URL is the older name of the same setting.
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 

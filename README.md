@@ -42,8 +42,11 @@ Shortify is a full-stack URL shortener and QR code generator built with React, N
 ```
 Shortify/
 ├── .github/workflows/ci.yml   CI: lint, tests (with MongoDB), and build on every push
-├── netlify.toml               Frontend hosting config (build, /api proxy, SPA fallback)
-├── render.yaml                API hosting config (Render Blueprint, no secrets)
+├── api/index.js               Vercel serverless function (the API and short-link redirects)
+├── vercel.json                Vercel build and routing config (recommended deployment, no secrets)
+├── package.json               Repository root marker for Vercel (ES modules, Node version)
+├── render.yaml                Alternative: one Render service (Blueprint, no secrets)
+├── netlify.toml               Alternative: website on Netlify (build, /api proxy, SPA fallback)
 ├── client/                    React + Vite frontend
 │   ├── src/
 │   │   ├── components/
@@ -96,7 +99,7 @@ Shortify/
 
 1. Create a free M0 cluster at https://www.mongodb.com/cloud/atlas.
 2. *Database Access*: add a database user with a long generated password (read/write).
-3. *Network Access*: allow the API host's IP addresses. Free hosts such as Render have changing IPs, so you may need `0.0.0.0/0`; the strong password is then the protection.
+3. *Network Access*: allow the API host's IP addresses. Hosts such as Vercel (serverless) and Render have changing IPs, so you need `0.0.0.0/0`; the strong password is then the protection.
 4. *Connect → Drivers*: copy the `mongodb+srv://...` string, insert the password, and add the database name: `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/shortify?retryWrites=true&w=majority`. Put it only in the hosting dashboard (`MONGO_URI`), never in a committed file.
 
 ## Run locally
@@ -173,8 +176,8 @@ The **app shell** has a fixed sidebar on desktop (Create link, Overview, My link
 | `NODE_ENV` | `development` | `production` requires HTTPS for `PUBLIC_BASE_URL` and `CLIENT_ORIGIN`, and secure cookies |
 | `MONGO_URI` | `mongodb://127.0.0.1:27017/shortify` | MongoDB connection string |
 | `PUBLIC_BASE_URL` | `http://localhost:5000` | The short-link domain: links are `<PUBLIC_BASE_URL>/<code>`, e.g. `https://yourdomain.com/aB7xK9p`. Address only (no path). In production it must be a public HTTPS domain that points at this API (see [Use your own short domain](#use-your-own-short-domain)). |
-| `CLIENT_DIST_DIR` | *(unset)* | Folder with the built website (`client/dist`). When set, this server also serves the site: one address for the website, API, and short links (deployment option A). |
-| `COOKIE_SAME_SITE` | `lax` | `none` only for a website on another site calling the API directly (option B, HTTPS only). |
+| `CLIENT_DIST_DIR` | *(unset)* | Folder with the built website (`client/dist`). When set, this server also serves the site: one address for the website, API, and short links (deployment option B, Render). Not used on Vercel, which serves the website itself. |
+| `COOKIE_SAME_SITE` | `lax` | `none` only for a website on another site calling the API directly (deployment option C, HTTPS only). |
 | `CLIENT_ORIGIN` | `http://localhost:5173` | Frontend origin(s) allowed by CORS, comma-separated. Origins only (no path); a trailing slash is removed. Required in production. |
 | `TRUST_PROXY` | `0` | Number of reverse proxies in front of the API (usually `1` when hosted) |
 | `API_LIMIT_PER_MINUTE` | `300` | All API requests from one IP address per minute (safety net for every endpoint) |
@@ -191,7 +194,7 @@ The **app shell** has a fixed sidebar on desktop (Create link, Overview, My link
 
 | Variable | Example | Purpose |
 |---|---|---|
-| `VITE_API_BASE_URL` | `/api` | Where the API is. Keep `/api` in development (Vite proxy) and in deployment option A; set `https://<your-api>.onrender.com/api` only when the website is hosted separately and calls the API directly. |
+| `VITE_API_BASE_URL` | `/api` | Where the API is. Keep `/api` in development (Vite proxy) and on Vercel or Render (options A and B: the website and API share one address); set `https://<your-api>/api` only when the website is hosted separately and calls the API directly (option C). |
 
 ## API
 
@@ -466,7 +469,7 @@ Visitors can shorten links without an account. Such links belong to the browser 
 
 ```bash
 cd server && npm run lint   # ESLint
-cd server && npm test       # 325 API + unit tests; needs MongoDB, uses the separate "shortify_test" database
+cd server && npm test       # 328 API + unit tests; needs MongoDB, uses the separate "shortify_test" database
 cd client && npm run lint   # ESLint (incl. React hooks rules)
 cd client && npm test       # 74 unit tests, incl. decoding generated QR codes with jsQR
 cd client && npm run build  # production build
@@ -481,9 +484,9 @@ npm install
 npm test                 # headless; add --headed to watch, or "npm run report" for the HTML report
 ```
 
-Playwright starts its own API (port 5100) and a production build of the frontend (port 5174) against a throwaway `shortify_e2e` database that is emptied before and after the run, so development data is never touched (MongoDB must be running). Locally it uses your installed Google Chrome; on CI it installs Playwright's Chromium. Failures keep a screenshot and a step-by-step trace (`npx playwright show-trace <file>`). To test the deployment shape (deployment option A: one server serving the website, API, and short links), run `E2E_SINGLE_SERVICE=1 npx playwright test` (PowerShell: `$env:E2E_SINGLE_SERVICE=1; npx playwright test`).
+Playwright starts its own API (port 5100) and a production build of the frontend (port 5174) against a throwaway `shortify_e2e` database that is emptied before and after the run, so development data is never touched (MongoDB must be running). Locally it uses your installed Google Chrome; on CI it installs Playwright's Chromium. Failures keep a screenshot and a step-by-step trace (`npx playwright show-trace <file>`). To test the one-server shape (deployment option B: Express serving the website, API, and short links), run `E2E_SINGLE_SERVICE=1 npx playwright test` (PowerShell: `$env:E2E_SINGLE_SERVICE=1; npx playwright test`).
 
-**Smoke test (end to end).** With the API running, `cd server && npm run smoke` walks through the real user flows over HTTP like a browser would (41 checks): guest link → redirect → sign-up claims it → alias, conflict, click counting, dashboard and analytics numbers, QR history, edit/rename/switch off, another user getting `404` for everything, CSRF rejection, delete, logout revoking a copied session cookie, and login. Point it at a deployment with `npm run smoke -- https://your-site.netlify.app/api`. It leaves two `smoke-...@example.com` accounts behind (there is no delete-account endpoint).
+**Smoke test (end to end).** With the API running, `cd server && npm run smoke` walks through the real user flows over HTTP like a browser would (41 checks): guest link → redirect → sign-up claims it → alias, conflict, click counting, dashboard and analytics numbers, QR history, edit/rename/switch off, another user getting `404` for everything, CSRF rejection, delete, logout revoking a copied session cookie, and login. Point it at a deployment with `npm run smoke -- https://<your-project>.vercel.app/api`. It leaves two `smoke-...@example.com` accounts behind (there is no delete-account endpoint).
 
 **CI.** `.github/workflows/ci.yml` runs the server lint and tests against a MongoDB 7 service container, the client lint, tests, and build, and the Playwright browser tests, on every push to `main` and every pull request.
 
@@ -493,51 +496,61 @@ What the automated tests cover: URL validation and normalization, short-code col
 
 **Why links say `localhost` until you deploy.** Every short link is `<PUBLIC_BASE_URL>/<code>`, built by the server. On your computer `PUBLIC_BASE_URL` is `http://localhost:5000`, and "localhost" always means "this device", so those links cannot open on another phone or computer. Changing the displayed text would not help: the server itself must be reachable on the internet. Once Shortify runs on a public host and `PUBLIC_BASE_URL` is that host's HTTPS address, every link (old ones too, because MongoDB stores only the code) becomes `https://<your-host>/<code>` and works on any device. Until then, the dashboard shows a notice that links only work on this computer.
 
-### Option A (recommended): one Render service + MongoDB Atlas
+### Option A (recommended): Vercel + MongoDB Atlas
 
-One Express server serves the website, the API (`/api/...`), and the short links (`/<code>`) from the same public address, e.g. `https://shortify.onrender.com`. No CORS or cross-site cookie setup is needed, and there is only one service to deploy. `render.yaml` describes it.
+One Vercel project serves everything from one public address, e.g. `https://shortify.vercel.app`:
 
-1. **MongoDB Atlas** (see [MongoDB setup](#mongodb-setup)): create a database user, allow network access from `0.0.0.0/0` (Render's addresses change; the strong password protects the database), and copy the connection string with the database name: `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/shortify?retryWrites=true&w=majority`.
-2. **GitHub**: create an empty repository and push this project (`git remote add origin <url>`, then `git push -u origin main`). `.env` files are ignored by git, so no secret is uploaded.
-3. **Render → New → Blueprint** → choose the repository. Render reads `render.yaml` and creates the `shortify` web service:
-   - build: `npm ci --prefix client --include=dev && npm run build --prefix client && npm ci --prefix server --omit=dev`
-   - start: `node server/src/server.js` · health check: `/api/health`
-   - set for you: `NODE_ENV=production`, `CLIENT_DIST_DIR=client/dist`, `TRUST_PROXY=1`, and a generated `JWT_SECRET`
+- the **website**: the React build (`client/dist`) from Vercel's CDN, including deep links such as `/dashboard`;
+- the **API** (`/api/...`) and the **short links** (`/<code>`): the Express app running as a serverless function (`api/index.js` → `server/src/serverless.js`).
 
-   Render asks for the two secret values:
-   - `MONGO_URI`: the Atlas connection string from step 1
-   - `PUBLIC_BASE_URL`: the service's address, `https://shortify.onrender.com` if that name is free. The real address is shown at the top of the service page after it is created; if it differs (Render adds a suffix when a name is taken), update `PUBLIC_BASE_URL` under *Environment* and redeploy.
-4. **Check** `https://<your-service>.onrender.com/api/health` returns `{"status":"ok","database":"connected"}`, then open the site, sign up, and create a link: it starts with your public address. In production the server refuses to start if `PUBLIC_BASE_URL` is missing, not HTTPS, has a path, or is `localhost`/a private IP, so a wrong value shows up as a failed deploy with a clear message in Render's logs instead of producing broken links.
-5. **Test from other devices**: open a short link on your phone using mobile data (a different network) and in a private/incognito window; it should redirect, and its click count should go up on the dashboard. Scan a downloaded QR code with the phone camera. Also run the end-to-end check from your computer: `cd server && npm run smoke -- https://<your-service>.onrender.com/api` (it leaves two `smoke-...@example.com` test accounts).
+Because the website and the API share one address, cookies stay first-party and no CORS setup is needed. `vercel.json` holds the build commands and routing; the function opens one MongoDB connection per warm instance and reuses it.
 
-### Option B: website on a separate host (e.g. Netlify) + API on Render
+1. **MongoDB Atlas** (see [MongoDB setup](#mongodb-setup)): a database user with `readWrite` on `shortify`, Network Access `0.0.0.0/0` (Vercel's addresses change; the strong password protects the database), and the connection string ending in `.mongodb.net/shortify?retryWrites=true&w=majority`. Check it locally first: `$env:MONGO_URI="…"; npm run check-db` (in `server/`; the string is never printed).
+2. **GitHub**: the repository must be pushed (`.env` files are ignored by git, so no secret is uploaded).
+3. **Vercel → Add New… → Project** → import the repository. Keep **Root Directory** at the repository root (`./`); `vercel.json` sets the rest (framework *Other*, install, build, output `client/dist`). Before clicking **Deploy**, open **Environment Variables** and add (Production):
 
-Use this only if you want the website hosted separately. Deploy the API as in option A but without `CLIENT_DIST_DIR`, and set `CLIENT_ORIGIN` to the website's address. Then pick one:
+   | Name | Value |
+   |---|---|
+   | `NODE_ENV` | `production` |
+   | `MONGO_URI` | your Atlas connection string |
+   | `PUBLIC_BASE_URL` | `https://<project-name>.vercel.app` |
+   | `CLIENT_ORIGIN` | the same address as `PUBLIC_BASE_URL` |
+   | `JWT_SECRET` | 32+ random characters: run `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` and paste the output |
+   | `TRUST_PROXY` | `1` |
 
-- **Proxy (recommended for option B)**: the website calls `/api` on its own domain and Netlify forwards it to Render. Edit `netlify.toml` (replace `YOUR-API-HOST`), leave `VITE_API_BASE_URL` unset or `/api`, and import the repository in Netlify. Cookies stay first-party, so login works in every browser.
-- **Direct calls**: set `VITE_API_BASE_URL=https://<your-api>.onrender.com/api` in Netlify, and on Render `CLIENT_ORIGIN=https://<your-site>.netlify.app` and `COOKIE_SAME_SITE=none`. The session cookie is then a cross-site cookie: it works in Chrome and Firefox today, but browsers that block third-party cookies (Safari, or strict privacy settings) will not keep users logged in. Prefer option A or the proxy.
+4. **Deploy**, then open the project's **Domains** (or the deployment page) to see the production address. If it is not exactly the `PUBLIC_BASE_URL` you entered (Vercel adds a suffix when a name is taken), update `PUBLIC_BASE_URL` and `CLIENT_ORIGIN` under *Settings → Environment Variables* and **Redeploy**. Environment variable changes only apply to new deployments.
+5. **Check** `https://<your-project>.vercel.app/api/health` returns `{"status":"ok","database":"connected"}`, then sign up and create a link: it starts with your public address. If something is wrong, *Deployments → (latest) → Functions/Logs* shows the server's message; in production it refuses a missing or local `PUBLIC_BASE_URL` and says which setting to fix.
+6. **Test from other devices**: open a short link on your phone using mobile data and in a private window (it should redirect and its click count should rise), scan a downloaded QR code, and run `cd server && npm run smoke -- https://<your-project>.vercel.app/api` (leaves two `smoke-...@example.com` test accounts).
 
-In option B the short links still live on the API's address, so `PUBLIC_BASE_URL` is the Render address, not the Netlify one.
+Serverless notes: the first request after a quiet period starts a new instance (a short delay while it connects to MongoDB). Rate-limit counters and the repeat-click cache live in memory per instance, so on serverless they are approximate (several instances may run at once). For lower latency, choose a Vercel function region close to your Atlas cluster's region (*Settings → Functions*).
 
-### Where each setting goes
+### Option B: one Render service
+
+`render.yaml` deploys the same app as one always-on Node service (Express also serves the website via `CLIENT_DIST_DIR=client/dist`): Render → **New → Blueprint** → choose the repository, then enter `MONGO_URI` and `PUBLIC_BASE_URL` (`https://<service>.onrender.com`). Free Render services sleep after inactivity.
+
+### Option C: website and API on different hosts
+
+If the website is hosted separately (e.g. Netlify) from the API: set `CLIENT_ORIGIN` on the API to the website's address, and either proxy `/api` through the website host (`netlify.toml`, replace `YOUR-API-HOST`; recommended, cookies stay first-party) or call the API directly with `VITE_API_BASE_URL=https://<your-api>/api` on the website and `COOKIE_SAME_SITE=none` on the API (browsers that block third-party cookies, such as Safari, will not keep users logged in). Short links still live on the API's address, so `PUBLIC_BASE_URL` is the API's address.
+
+### Where each setting goes (Vercel)
 
 | Setting | Where | Value |
 |---|---|---|
-| `MONGO_URI` | Render → service → Environment | Atlas connection string (secret) |
-| `PUBLIC_BASE_URL` | Render → service → Environment | `https://<your-service>.onrender.com` (or your own domain) |
-| `JWT_SECRET` | Render (generated by the Blueprint) | 32+ random characters (secret) |
-| `NODE_ENV`, `TRUST_PROXY`, `CLIENT_DIST_DIR` | Render (set by `render.yaml`) | `production`, `1`, `client/dist` |
-| `CLIENT_ORIGIN` | Render, option B only | the website's address, e.g. `https://<your-site>.netlify.app` |
-| `COOKIE_SAME_SITE` | Render, option B direct calls only | `none` |
-| `VITE_API_BASE_URL` | Netlify → Site configuration → Environment variables, option B direct calls only | `https://<your-api>.onrender.com/api` (otherwise leave unset: the app uses `/api`) |
-| Network access | MongoDB Atlas → Network Access | `0.0.0.0/0` for Render (or Render's outbound IPs on paid plans) |
+| `MONGO_URI` | Vercel → Project → Settings → Environment Variables | Atlas connection string (secret) |
+| `PUBLIC_BASE_URL` | same | `https://<your-project>.vercel.app` (or your own domain) |
+| `CLIENT_ORIGIN` | same | the same address as `PUBLIC_BASE_URL` |
+| `JWT_SECRET` | same | 32+ random characters (secret) |
+| `NODE_ENV`, `TRUST_PROXY` | same | `production`, `1` |
+| `VITE_API_BASE_URL` | not needed on Vercel | the app calls `/api` on its own address |
+| Network access | MongoDB Atlas → Network Access | `0.0.0.0/0` |
+| Build, output, routing | `vercel.json` (in the repository) | nothing to set by hand |
 
 Templates with placeholders only: `server/.env.example` (development), `server/.env.production.example`, `client/.env.example`, `client/.env.production.example`. Never commit a real `.env`, the Atlas password, or the JWT secret.
 
 Hosting notes:
-- Render's free plan sleeps after inactivity; the first request after a pause (including a short-link redirect) can take tens of seconds.
-- `TRUST_PROXY` must match the number of proxies in front of the API (Render: 1), otherwise per-IP rate limits see the proxy's address. With the Netlify `/api` proxy, API rate limits count per Netlify edge address rather than per visitor; redirects (which go to Render directly) are counted per visitor. The custom-domain setup avoids this.
-- Rate-limit counters and the repeat-click cache are kept in memory, so they reset on restart and are per instance. Data in MongoDB is unaffected (verified: links and clicks survive an API restart).
+- Vercel: a new serverless instance needs a moment to connect to MongoDB (cold start); Render's free plan sleeps after inactivity, and the first request after a pause can take tens of seconds.
+- `TRUST_PROXY` must match the number of proxies in front of the API (Vercel: 1, Render: 1), otherwise per-IP rate limits see the proxy's address. With the Netlify `/api` proxy (option C), API rate limits count per Netlify edge address rather than per visitor.
+- Rate-limit counters and the repeat-click cache are kept in memory, so they reset on restart and are per instance (on Vercel several instances can run at once, so the limits are approximate). Data in MongoDB is unaffected (verified: links and clicks survive an API restart).
 
 ### Use your own short domain
 
@@ -549,33 +562,19 @@ Two ways to get a working public domain:
 
 | Option | Links look like | Cost |
 |---|---|---|
-| Render's free subdomain | `https://shortify-api.onrender.com/aB7xK9p` | free |
-| Your own short domain | `https://yourdomain.com/aB7xK9p` | the domain's yearly price (short `.link`, `.xyz`, `.click` domains are often cheap; compare registrars such as Cloudflare, Namecheap, or Porkbun). Render's Hobby plan includes 2 custom domains. |
+| Vercel's free subdomain | `https://<your-project>.vercel.app/aB7xK9p` | free |
+| Your own short domain | `https://yourdomain.com/aB7xK9p` | the domain's yearly price (short `.link`, `.xyz`, `.click` domains are often cheap; compare registrars such as Cloudflare, Namecheap, or Porkbun). Adding it to the Vercel project costs nothing extra. |
 
-Recommended layout with your own domain (the same pattern as big shorteners): the **short domain** serves the redirects and the API, and the **app** lives on a subdomain.
+On Vercel the website, the API, and the short links share one address, so your own domain serves all three: `https://yourdomain.com` is the app, `https://yourdomain.com/<code>` the short links.
 
-| Address | Points to | Purpose |
-|---|---|---|
-| `yourdomain.com` | Render web service (the API) | short links `https://yourdomain.com/<code>`, the API at `/api`; `/` sends visitors to the app |
-| `app.yourdomain.com` | Netlify site (the frontend) | sign up, dashboard, My links, QR codes |
-
-Because both are on `yourdomain.com`, the browser treats them as the same site, so the session cookie works without the Netlify `/api` proxy.
-
-Steps (after the normal [Deployment](#deployment) works on the free subdomains):
+Steps (after the [Vercel deployment](#option-a-recommended-vercel--mongodb-atlas) works on the `.vercel.app` address):
 
 1. **Buy the domain** at any registrar.
-2. **Render → your API service → Settings → Custom Domains → Add** `yourdomain.com` (Render adds `www` too and redirects it). Then at your DNS provider ([Render's guide](https://render.com/docs/configure-other-dns)):
-   - root domain: an `ALIAS`/`ANAME` record to `<your-service>.onrender.com`, or if those are not supported an `A` record to `216.24.57.1` (on Cloudflare DNS use a `CNAME`, which Cloudflare flattens);
-   - `www`: a `CNAME` to `<your-service>.onrender.com`;
-   - remove any `AAAA` records for these names.
+2. **Vercel → your project → Settings → Domains → Add** `yourdomain.com`. Vercel shows the DNS records to create at your registrar (usually an `A` record for the root domain and a `CNAME` for `www`); add exactly what it shows and remove conflicting old records for these names. Vercel issues the HTTPS certificate automatically once DNS is correct (changes can take up to a day to spread).
+3. **Settings → Environment Variables**: `PUBLIC_BASE_URL=https://yourdomain.com` and `CLIENT_ORIGIN=https://yourdomain.com` (add the `.vercel.app` address too, comma-separated, if people still open the app there). **Redeploy.** Existing links switch to the new domain automatically (short URLs are built from the setting on every request), and saved QR codes are updated on the next start. QR codes that were already printed keep the old address, which keeps working as long as the `.vercel.app` domain stays on the project.
+4. **Check**: `cd server && npm run smoke -- https://yourdomain.com/api`.
 
-   Click **Verify**. Render issues the HTTPS certificate automatically and redirects `http://` to `https://`.
-3. **Netlify → your site → Domain management → Add** `app.yourdomain.com`, then add the `CNAME` record Netlify shows (`app` → `<your-site>.netlify.app`). DNS changes can take up to a day to spread.
-4. **Settings**:
-   - Render: `PUBLIC_BASE_URL=https://yourdomain.com`, `CLIENT_ORIGIN=https://app.yourdomain.com`. If you turn on Cloudflare's proxy (orange cloud) in front of Render, there is one more proxy hop: set `TRUST_PROXY=2`.
-   - Netlify: `VITE_API_BASE_URL=https://yourdomain.com/api`, and delete the `/api/*` rule from `netlify.toml` (the app now calls the API directly).
-   - Redeploy both. Existing links switch to the new domain automatically (short URLs are built from the setting on every request), and saved QR codes are updated when the API starts. QR codes that were already printed keep the old address.
-5. **Check**: `cd server && npm run smoke -- https://yourdomain.com/api`. While DNS is still spreading, you can already test the server itself with `--redirect-via https://<your-service>.onrender.com`.
+With Render instead (option B): Render → your service → *Settings → Custom Domains → Add*, create the DNS records Render shows, then set the same two variables on the service.
 
 In production the API refuses to start if `PUBLIC_BASE_URL` is not HTTPS, has a path, or is `localhost`/an IP address, so a broken short-link domain is caught at deploy time instead of producing dead links.
 

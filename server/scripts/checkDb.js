@@ -26,7 +26,7 @@ try {
   const probe = mongoose.connection.db.collection('connection_checks');
   await probe.insertOne({ checkedAt: new Date() });
   await probe.drop();
-  console.log('✔ This user can read and write. The string is ready for Render (MONGO_URI).');
+  console.log('✔ This user can read and write. The string is ready to use as MONGO_URI on Vercel.');
 } catch (error) {
   console.error(`✖ Could not use the database: ${error.message}`);
   if (/bad auth|authentication failed/i.test(error.message)) console.error('  → Check the username and password in the string.');

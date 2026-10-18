@@ -17,7 +17,7 @@ export const NOT_DELETED = { deletedAt: null };
 const isDuplicateShortCodeError = (error) => error?.code === 11000 && Boolean(error.keyPattern?.shortCode);
 
 /**
- * The full public short URL for a code, e.g. https://shortify.onrender.com/aB7xK9p.
+ * The full public short URL for a code, e.g. https://your-project.vercel.app/aB7xK9p.
  * Built from PUBLIC_BASE_URL every time (MongoDB stores only the code), so
  * changing the domain updates every existing link, and no record ever holds
  * a hard-coded localhost address.

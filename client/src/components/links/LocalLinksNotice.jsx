@@ -6,7 +6,7 @@ import { withoutProtocol } from '../../lib/format';
 // devices on the internet cannot open links on these addresses.
 const LOCAL_ONLY = /^(localhost|.*\.localhost|.*\.local|\[.*\]|127\..*|10\..*|192\.168\..*|169\.254\..*|172\.(1[6-9]|2\d|3[01])\..*)$/i;
 
-export function isLocalOnlyBaseUrl(baseUrl) {
+function isLocalOnlyBaseUrl(baseUrl) {
   try {
     return LOCAL_ONLY.test(new URL(baseUrl).hostname);
   } catch {
