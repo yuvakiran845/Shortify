@@ -136,7 +136,9 @@ export default function LinksList({ links, onEdit, onDelete }) {
         </Table>
       </div>
 
-      <ul className="grid gap-3 md:grid-cols-2 xl:hidden" aria-label="Your short links">
+      {/* grid-cols-1 (minmax(0, 1fr)), not the implicit auto column: an auto column grows to fit
+          the longest URL and pushes the card and its buttons off a phone screen */}
+      <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden" aria-label="Your short links">
         {links.map((link) => (
           <li key={link.id}>
             {/* h-full + mt-auto: cards side by side are equally tall, with actions aligned at the bottom */}

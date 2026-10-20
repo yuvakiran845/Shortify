@@ -25,12 +25,20 @@ test.describe('On a phone', () => {
 
   test('the signed-in app shows link cards and a slide-in navigation drawer', async ({ page }) => {
     await signUpViaApi(page);
-    const link = await createLinkViaApi(page, { url: 'https://example.com/on-a-phone', title: 'Phone test' });
+    // A long URL must be truncated inside the card, not stretch the card past the screen.
+    const link = await createLinkViaApi(page, {
+      url: 'https://example.com/on-a-phone/with-a-very-long-path-that-is-wider-than-any-phone-screen',
+      title: 'Phone test',
+    });
 
     await page.goto('/links');
     const cards = page.getByRole('list', { name: 'Your short links' });
     await expect(cards.getByText('Phone test')).toBeVisible();
-    await expect(cards.getByRole('button', { name: `Edit ${link.shortUrl.replace('http://', '')}` })).toBeVisible();
+    const edit = cards.getByRole('button', { name: `Edit ${link.shortUrl.replace('http://', '')}` });
+    await expect(edit).toBeVisible();
+    for (const box of [await cards.getByRole('listitem').first().boundingBox(), await edit.boundingBox()]) {
+      expect(box.x + box.width, 'the card and its buttons should fit the screen width').toBeLessThanOrEqual(page.viewportSize().width);
+    }
     await expectNoSidewaysScroll(page);
 
     await page.getByRole('button', { name: 'Open navigation' }).click();
