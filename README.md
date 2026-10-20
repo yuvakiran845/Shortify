@@ -2,6 +2,10 @@
 
 Shorten links. Share smarter.
 
+**Live demo: [getshortify.vercel.app](https://getshortify.vercel.app)**
+
+![Shortify landing page: paste a long URL to get a short link and a QR code](docs/screenshots/landing.png)
+
 Shortify is a full-stack URL shortener and QR code generator built with React, Node.js, Express, and MongoDB. Every number in the app comes from real data: clicks are recorded events, not counters made up for the UI.
 
 ## Features
@@ -15,6 +19,47 @@ Shortify is a full-stack URL shortener and QR code generator built with React, N
 - **QR codes**: for any URL or one of your short links, in three colors and three sizes, downloaded as PNG. Scannability is verified by decoding the generated pixels in tests. Logged-in users get a QR history.
 - **Privacy-conscious click tracking**: no IP addresses or full user agents are stored; bots, link previews, prefetches, and quick repeat clicks are not counted.
 - **Responsive and accessible**: works from 375 px phones to desktops, keyboard-friendly dialogs and menus, labelled forms, visible focus states.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/shorten-result.png" alt="A long URL shortened on the home page, with Copy link and QR code buttons">
+      <p align="center"><b>Shorten without an account</b><br><sub>Paste a URL, get a short link and a QR code instantly.</sub></p>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/dashboard.png" alt="Dashboard with total links, total clicks, active links, QR codes, and recent links">
+      <p align="center"><b>Dashboard</b><br><sub>Totals for links, real clicks, active links, and QR codes.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/my-links.png" alt="My links: search, filters, sorting, and each link's clicks, date, status, and actions">
+      <p align="center"><b>My links</b><br><sub>Search, filter, sort, copy, edit, or delete every link.</sub></p>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/create-link.png" alt="Create a short link dialog with a custom alias and title">
+      <p align="center"><b>Custom aliases</b><br><sub>Pick your own short code, add a title, or set an expiry date.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/qr-generator.png" alt="QR code generator showing a teal QR code for a short link, with download and history">
+      <p align="center"><b>QR codes</b><br><sub>For any URL or short link, in three colors and sizes, saved to history.</sub></p>
+    </td>
+    <td width="50%">
+      <p align="center">
+        <img src="docs/screenshots/mobile-home.png" alt="Shortify home page on a phone" width="46%">
+        &nbsp;
+        <img src="docs/screenshots/mobile-links.png" alt="My links on a phone, shown as cards" width="46%">
+      </p>
+      <p align="center"><b>On phones</b><br><sub>The whole app works from 375 px screens up.</sub></p>
+    </td>
+  </tr>
+</table>
+
+<sub>Screenshots show demo data.</sub>
 
 ## Architecture
 
@@ -47,6 +92,7 @@ Shortify/
 ├── package.json               Repository root marker for Vercel (ES modules, Node version)
 ├── render.yaml                Alternative: one Render service (Blueprint, no secrets)
 ├── netlify.toml               Alternative: website on Netlify (build, /api proxy, SPA fallback)
+├── docs/screenshots/          Images used in this README
 ├── client/                    React + Vite frontend
 │   ├── src/
 │   │   ├── components/
